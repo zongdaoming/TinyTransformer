@@ -9,12 +9,18 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
+<<<<<<< HEAD
 data/
 results/
 develop-eggs/
 dist/
 downloads/rem
 datasets/
+=======
+develop-eggs/
+dist/
+downloads/
+>>>>>>> c4cd47abeeafc15c1484bfa84b233e0065ec432c
 eggs/
 .eggs/
 lib/

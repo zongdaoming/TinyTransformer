@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # LeViT: a Vision Transformer in ConvNet's Clothing for Faster Inference
 
 This repository contains PyTorch evaluation code, training code and pretrained models for LeViT.
@@ -102,3 +103,6 @@ This repository is released under the Apache 2.0 license as found in the [LICENS
 
 # Contributing
 We actively welcome your pull requests! Please see [CONTRIBUTING.md](.github/CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md) for more info.
+=======
+# TinyTransformer
+>>>>>>> c4cd47abeeafc15c1484bfa84b233e0065ec432c

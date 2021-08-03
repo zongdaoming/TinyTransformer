@@ -186,7 +186,11 @@
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
+<<<<<<< HEAD
    Copyright 2020 - present, Facebook, Inc
+=======
+   Copyright [yyyy] [name of copyright owner]
+>>>>>>> c4cd47abeeafc15c1484bfa84b233e0065ec432c
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
