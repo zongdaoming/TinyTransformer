@@ -137,9 +137,9 @@ meta_file_train:
   # - /mnt/lustre/rws3/data_lists/20210222_100k_chip/20210222_sv_100k_chip.json #num_data: 7000
   # - /mnt/lustre/rws3/data_lists/20210222_100k_chip/20210222_20210309_bv_100k_chip.json #num_data: 12103
   # - /mnt/lustre/rws3/data_lists/20210222_100k_chip/20210526_bv_float_sunken_100k.json #num_data: 9905
-  - /mnt/lustre/rws3/data_lists/20210316_salon_mb01/20210114_20210322_mc23_a03_c02_mb01_b02.json #num_data: 5690
+  # - /mnt/lustre/rws3/data_lists/20210316_salon_mb01/20210114_20210322_mc23_a03_c02_mb01_b02.json #num_data: 5690
   # - /mnt/lustre/rws3/data_lists/spread_data/20201028_20210526_beige_red_green_spread.json #num_data: 2578
-  # - /mnt/lustre/rws3/data_lists/jira/all.json #num_data: 531
+  - /mnt/lustre/rws3/data_lists/jira/all.json #num_data: 531
 
 meta_file_test: 
   # - /mnt/lustre/rws3/data_lists/11221028_all_merge7_ass/all.json # num_data: 21553
@@ -166,6 +166,6 @@ eval: False
 device: cuda
 pin_mem: True
 start_epoch: 0
-num_workers: 8
+num_workers: 16
 dist_url: 'env://'
 cache_mode: False
