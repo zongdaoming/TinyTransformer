@@ -1,0 +1,371 @@
+which: no hipcc in (/mnt/lustre/share/cuda-9.2/bin:/mnt/lustre/share/gcc/gcc-5.4/bin:/mnt/lustre/zongdaoming/.conda/envs/hoi/bin:/mnt/lustre/share/spring/conda_envs/miniconda3/bin:/mnt/lustre/share/spring/conda_envs/miniconda3/bin:/mnt/lustre/share/cuda-10.1/bin:/mnt/lustre/share/gcc/gcc-5.4/bin:/mnt/lustre/zongdaoming/.conda/envs/hoi/bin:/mnt/lustre/zongdaoming/.conda/envs/defdetr/bin:/mnt/lustre/share/spring/conda_envs/miniconda3/condabin:/mnt/lustre/share/spring:/mnt/lustre/share/spring/conda_envs/miniconda3/bin:/mnt/lustre/share/cuda-9.0/bin:/mnt/lustre/share/cuda-10.1/bin:/mnt/lustre/share/gcc/gcc-5.4/bin:/mnt/lustre/zongdaoming/.conda/envs/hoi/bin:/mnt/lustre/zongdaoming/.vscode-server-insiders/bin/53b58c89d44deb230dc526605561a1d42f6d1c50/bin:/mnt/lustre/share/intel64/bin:/mnt/lustre/share/spring:/mnt/lustre/share/platform/env:/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/ibutils/bin:/opt/puppetlabs/bin:/mnt/lustre/zongdaoming/bin)
+Torch version is 1.5.1
+Torch cuda is available True
+Torch cuda devices 1
+running build
+running build_py
+creating build
+creating build/lib.linux-x86_64-3.7
+creating build/lib.linux-x86_64-3.7/modules
+copying modules/__init__.py -> build/lib.linux-x86_64-3.7/modules
+copying modules/ms_deform_attn_stackFrame.py -> build/lib.linux-x86_64-3.7/modules
+copying modules/ms_deform_attn.py -> build/lib.linux-x86_64-3.7/modules
+creating build/lib.linux-x86_64-3.7/functions
+copying functions/__init__.py -> build/lib.linux-x86_64-3.7/functions
+copying functions/ms_deform_attn_func.py -> build/lib.linux-x86_64-3.7/functions
+running build_ext
+building 'MultiScaleDeformableAttention' extension
+creating /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7
+creating /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt
+creating /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre
+creating /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming
+creating /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models
+creating /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models/deformable-detr
+creating /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models/deformable-detr/models
+creating /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models/deformable-detr/models/ops
+creating /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src
+creating /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cpu
+creating /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda
+Emitting ninja build file /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/build.ninja...
+Compiling objects...
+Allowing ninja to set a default number of workers... (overridable by setting the environment variable MAX_JOBS=N)
+[1/3] c++ -MMD -MF /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cpu/ms_deform_attn_cpu.o.d -pthread -B /mnt/lustre/zongdaoming/.conda/envs/hoi/compiler_compat -Wl,--sysroot=/ -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -Wstrict-prototypes -fPIC -DWITH_CUDA -I/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src -I/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include -I/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include -I/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/TH -I/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/THC -I/mnt/lustre/share/cuda-9.2/include -I/mnt/lustre/zongdaoming/.conda/envs/hoi/include/python3.7m -c -c /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cpu/ms_deform_attn_cpu.cpp -o /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cpu/ms_deform_attn_cpu.o -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=MultiScaleDeformableAttention -D_GLIBCXX_USE_CXX11_ABI=0 -std=c++14
+cc1plus: warning: command line option ‘-Wstrict-prototypes’ is valid for C/ObjC but not for C++
+[2/3] c++ -MMD -MF /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/vision.o.d -pthread -B /mnt/lustre/zongdaoming/.conda/envs/hoi/compiler_compat -Wl,--sysroot=/ -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -Wstrict-prototypes -fPIC -DWITH_CUDA -I/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src -I/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include -I/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include -I/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/TH -I/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/THC -I/mnt/lustre/share/cuda-9.2/include -I/mnt/lustre/zongdaoming/.conda/envs/hoi/include/python3.7m -c -c /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/vision.cpp -o /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/vision.o -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=MultiScaleDeformableAttention -D_GLIBCXX_USE_CXX11_ABI=0 -std=c++14
+cc1plus: warning: command line option ‘-Wstrict-prototypes’ is valid for C/ObjC but not for C++
+In file included from /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/vision.cpp:11:0:
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/ms_deform_attn.h: In function ‘at::Tensor ms_deform_attn_forward(const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, int)’:
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/ms_deform_attn.h:29:20: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+     if (value.type().is_cuda())
+                    ^
+In file included from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/Tensor.h:11:0,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/Context.h:4,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/ATen.h:5,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/types.h:3,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader_options.h:4,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader/base.h:3,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader/stateful.h:3,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader.h:3,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data.h:3,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/all.h:4,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/extension.h:4,
+                 from /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cpu/ms_deform_attn_cpu.h:12,
+                 from /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/ms_deform_attn.h:13,
+                 from /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/vision.cpp:11:
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:30: note: declared here
+   DeprecatedTypeProperties & type() const {
+                              ^
+In file included from /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/vision.cpp:11:0:
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/ms_deform_attn.h: In function ‘std::vector<at::Tensor> ms_deform_attn_backward(const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, int)’:
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/ms_deform_attn.h:51:20: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+     if (value.type().is_cuda())
+                    ^
+In file included from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/Tensor.h:11:0,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/Context.h:4,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/ATen.h:5,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/types.h:3,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader_options.h:4,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader/base.h:3,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader/stateful.h:3,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader.h:3,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data.h:3,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/all.h:4,
+                 from /mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/extension.h:4,
+                 from /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cpu/ms_deform_attn_cpu.h:12,
+                 from /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/ms_deform_attn.h:13,
+                 from /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/vision.cpp:11:
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:30: note: declared here
+   DeprecatedTypeProperties & type() const {
+                              ^
+[3/3] /mnt/lustre/share/cuda-9.2/bin/nvcc -DWITH_CUDA -I/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src -I/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include -I/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/torch/csrc/api/include -I/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/TH -I/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/THC -I/mnt/lustre/share/cuda-9.2/include -I/mnt/lustre/zongdaoming/.conda/envs/hoi/include/python3.7m -c -c /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu -o /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.o -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options ''"'"'-fPIC'"'"'' -DCUDA_HAS_FP16=1 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=MultiScaleDeformableAttention -D_GLIBCXX_USE_CXX11_ABI=0 -gencode=arch=compute_70,code=sm_70 -std=c++14
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_im2col_cuda.cuh(261): warning: variable "q_col" was declared but never referenced
+          detected during instantiation of "void ms_deformable_im2col_cuda(cudaStream_t, const scalar_t *, const int64_t *, const int64_t *, const scalar_t *, const scalar_t *, int, int, int, int, int, int, int, scalar_t *) [with scalar_t=double]" 
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu(64): here
+
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_im2col_cuda.cuh(762): warning: variable "q_col" was declared but never referenced
+          detected during instantiation of "void ms_deformable_col2im_cuda(cudaStream_t, const scalar_t *, const scalar_t *, const int64_t *, const int64_t *, const scalar_t *, const scalar_t *, int, int, int, int, int, int, int, scalar_t *, scalar_t *, scalar_t *) [with scalar_t=double]" 
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu(134): here
+
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_im2col_cuda.cuh(872): warning: variable "q_col" was declared but never referenced
+          detected during instantiation of "void ms_deformable_col2im_cuda(cudaStream_t, const scalar_t *, const scalar_t *, const int64_t *, const int64_t *, const scalar_t *, const scalar_t *, int, int, int, int, int, int, int, scalar_t *, scalar_t *, scalar_t *) [with scalar_t=double]" 
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu(134): here
+
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_im2col_cuda.cuh(331): warning: variable "q_col" was declared but never referenced
+          detected during instantiation of "void ms_deformable_col2im_cuda(cudaStream_t, const scalar_t *, const scalar_t *, const int64_t *, const int64_t *, const scalar_t *, const scalar_t *, int, int, int, int, int, int, int, scalar_t *, scalar_t *, scalar_t *) [with scalar_t=double]" 
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu(134): here
+
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_im2col_cuda.cuh(436): warning: variable "q_col" was declared but never referenced
+          detected during instantiation of "void ms_deformable_col2im_cuda(cudaStream_t, const scalar_t *, const scalar_t *, const int64_t *, const int64_t *, const scalar_t *, const scalar_t *, int, int, int, int, int, int, int, scalar_t *, scalar_t *, scalar_t *) [with scalar_t=double]" 
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu(134): here
+
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_im2col_cuda.cuh(544): warning: variable "q_col" was declared but never referenced
+          detected during instantiation of "void ms_deformable_col2im_cuda(cudaStream_t, const scalar_t *, const scalar_t *, const int64_t *, const int64_t *, const scalar_t *, const scalar_t *, int, int, int, int, int, int, int, scalar_t *, scalar_t *, scalar_t *) [with scalar_t=double]" 
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu(134): here
+
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_im2col_cuda.cuh(649): warning: variable "q_col" was declared but never referenced
+          detected during instantiation of "void ms_deformable_col2im_cuda(cudaStream_t, const scalar_t *, const scalar_t *, const int64_t *, const int64_t *, const scalar_t *, const scalar_t *, int, int, int, int, int, int, int, scalar_t *, scalar_t *, scalar_t *) [with scalar_t=double]" 
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu(134): here
+
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu: In function ‘at::Tensor ms_deform_attn_cuda_forward(const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, int)’:
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:34:62: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+     AT_ASSERTM(value.type().is_cuda(), "value must be a CUDA tensor");
+                                                              ^
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:1: note: declared here
+   DeprecatedTypeProperties & type() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:35:71: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+     AT_ASSERTM(spatial_shapes.type().is_cuda(), "spatial_shapes must be a CUDA tensor");
+                                                                       ^
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:1: note: declared here
+   DeprecatedTypeProperties & type() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:36:74: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+     AT_ASSERTM(level_start_index.type().is_cuda(), "level_start_index must be a CUDA tensor");
+                                                                          ^
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:1: note: declared here
+   DeprecatedTypeProperties & type() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:37:69: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+     AT_ASSERTM(sampling_loc.type().is_cuda(), "sampling_loc must be a CUDA tensor");
+                                                                     ^
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:1: note: declared here
+   DeprecatedTypeProperties & type() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:38:68: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+     AT_ASSERTM(attn_weight.type().is_cuda(), "attn_weight must be a CUDA tensor");
+                                                                    ^
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:1: note: declared here
+   DeprecatedTypeProperties & type() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu: In lambda function:
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:64:43: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+         AT_DISPATCH_FLOATING_TYPES(value.type(), "ms_deform_attn_forward_cuda", ([&] {
+                                           ^
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:1: note: declared here
+   DeprecatedTypeProperties & type() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:64:98: warning: ‘c10::ScalarType detail::scalar_type(const at::DeprecatedTypeProperties&)’ is deprecated: passing at::DeprecatedTypeProperties to an AT_DISPATCH macro is deprecated, pass an at::ScalarType instead [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/Dispatch.h:46:1: note: declared here
+ inline at::ScalarType scalar_type(const at::DeprecatedTypeProperties &t) {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu: In lambda function:
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:64:269: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:64:348: warning: ‘T* at::Tensor::data() const [with T = long int]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:64:384: warning: ‘T* at::Tensor::data() const [with T = long int]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:64:417: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:64:500: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:64:658: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu: In lambda function:
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:64:821: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:64:900: warning: ‘T* at::Tensor::data() const [with T = long int]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:64:936: warning: ‘T* at::Tensor::data() const [with T = long int]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:64:968: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:64:1050: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:64:1207: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu: In function ‘std::vector<at::Tensor> ms_deform_attn_cuda_backward(const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, int)’:
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:100:62: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+     AT_ASSERTM(value.type().is_cuda(), "value must be a CUDA tensor");
+                                                              ^
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:1: note: declared here
+   DeprecatedTypeProperties & type() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:101:71: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+     AT_ASSERTM(spatial_shapes.type().is_cuda(), "spatial_shapes must be a CUDA tensor");
+                                                                       ^
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:1: note: declared here
+   DeprecatedTypeProperties & type() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:102:74: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+     AT_ASSERTM(level_start_index.type().is_cuda(), "level_start_index must be a CUDA tensor");
+                                                                          ^
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:1: note: declared here
+   DeprecatedTypeProperties & type() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:103:69: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+     AT_ASSERTM(sampling_loc.type().is_cuda(), "sampling_loc must be a CUDA tensor");
+                                                                     ^
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:1: note: declared here
+   DeprecatedTypeProperties & type() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:104:68: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+     AT_ASSERTM(attn_weight.type().is_cuda(), "attn_weight must be a CUDA tensor");
+                                                                    ^
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:1: note: declared here
+   DeprecatedTypeProperties & type() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:105:68: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+     AT_ASSERTM(grad_output.type().is_cuda(), "grad_output must be a CUDA tensor");
+                                                                    ^
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:1: note: declared here
+   DeprecatedTypeProperties & type() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu: In lambda function:
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:43: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+         AT_DISPATCH_FLOATING_TYPES(value.type(), "ms_deform_attn_backward_cuda", ([&] {
+                                           ^
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:262:1: note: declared here
+   DeprecatedTypeProperties & type() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:98: warning: ‘c10::ScalarType detail::scalar_type(const at::DeprecatedTypeProperties&)’ is deprecated: passing at::DeprecatedTypeProperties to an AT_DISPATCH macro is deprecated, pass an at::ScalarType instead [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/Dispatch.h:46:1: note: declared here
+ inline at::ScalarType scalar_type(const at::DeprecatedTypeProperties &t) {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu: In lambda function:
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:277: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:303: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:382: warning: ‘T* at::Tensor::data() const [with T = long int]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:418: warning: ‘T* at::Tensor::data() const [with T = long int]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:451: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:534: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:695: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:779: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:867: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu: In lambda function:
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:1090: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:1115: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:1194: warning: ‘T* at::Tensor::data() const [with T = long int]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:1230: warning: ‘T* at::Tensor::data() const [with T = long int]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:1262: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:1344: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:1504: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:1587: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.cu:134:1674: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:341:1: note: declared here
+   T * data() const {
+ ^
+g++ -pthread -shared -B /mnt/lustre/zongdaoming/.conda/envs/hoi/compiler_compat -L/mnt/lustre/zongdaoming/.conda/envs/hoi/lib -Wl,-rpath=/mnt/lustre/zongdaoming/.conda/envs/hoi/lib -Wl,--no-as-needed -Wl,--sysroot=/ /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/vision.o /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cpu/ms_deform_attn_cpu.o /mnt/lustre/zongdaoming/models/deformable-detr/models/ops/build/temp.linux-x86_64-3.7/mnt/lustre/zongdaoming/models/deformable-detr/models/ops/src/cuda/ms_deform_attn_cuda.o -L/mnt/lustre/zongdaoming/.conda/envs/hoi/lib/python3.7/site-packages/torch/lib -L/mnt/lustre/share/cuda-9.2/lib64 -lc10 -ltorch -ltorch_cpu -ltorch_python -lcudart -lc10_cuda -ltorch_cuda -o build/lib.linux-x86_64-3.7/MultiScaleDeformableAttention.cpython-37m-x86_64-linux-gnu.so
+running install
+running bdist_egg
+running egg_info
+writing MultiScaleDeformableAttention.egg-info/PKG-INFO
+writing dependency_links to MultiScaleDeformableAttention.egg-info/dependency_links.txt
+writing top-level names to MultiScaleDeformableAttention.egg-info/top_level.txt
+reading manifest file 'MultiScaleDeformableAttention.egg-info/SOURCES.txt'
+writing manifest file 'MultiScaleDeformableAttention.egg-info/SOURCES.txt'
+installing library code to build/bdist.linux-x86_64/egg
+running install_lib
+creating build/bdist.linux-x86_64
+creating build/bdist.linux-x86_64/egg
+creating build/bdist.linux-x86_64/egg/modules
+copying build/lib.linux-x86_64-3.7/modules/__init__.py -> build/bdist.linux-x86_64/egg/modules
+copying build/lib.linux-x86_64-3.7/modules/ms_deform_attn_stackFrame.py -> build/bdist.linux-x86_64/egg/modules
+copying build/lib.linux-x86_64-3.7/modules/ms_deform_attn.py -> build/bdist.linux-x86_64/egg/modules
+copying build/lib.linux-x86_64-3.7/MultiScaleDeformableAttention.cpython-37m-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg
+creating build/bdist.linux-x86_64/egg/functions
+copying build/lib.linux-x86_64-3.7/functions/__init__.py -> build/bdist.linux-x86_64/egg/functions
+copying build/lib.linux-x86_64-3.7/functions/ms_deform_attn_func.py -> build/bdist.linux-x86_64/egg/functions
+byte-compiling build/bdist.linux-x86_64/egg/modules/__init__.py to __init__.cpython-37.pyc
+byte-compiling build/bdist.linux-x86_64/egg/modules/ms_deform_attn_stackFrame.py to ms_deform_attn_stackFrame.cpython-37.pyc
+byte-compiling build/bdist.linux-x86_64/egg/modules/ms_deform_attn.py to ms_deform_attn.cpython-37.pyc
+byte-compiling build/bdist.linux-x86_64/egg/functions/__init__.py to __init__.cpython-37.pyc
+byte-compiling build/bdist.linux-x86_64/egg/functions/ms_deform_attn_func.py to ms_deform_attn_func.cpython-37.pyc
+creating stub loader for MultiScaleDeformableAttention.cpython-37m-x86_64-linux-gnu.so
+byte-compiling build/bdist.linux-x86_64/egg/MultiScaleDeformableAttention.py to MultiScaleDeformableAttention.cpython-37.pyc
+creating build/bdist.linux-x86_64/egg/EGG-INFO
+copying MultiScaleDeformableAttention.egg-info/PKG-INFO -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying MultiScaleDeformableAttention.egg-info/SOURCES.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying MultiScaleDeformableAttention.egg-info/dependency_links.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying MultiScaleDeformableAttention.egg-info/top_level.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+writing build/bdist.linux-x86_64/egg/EGG-INFO/native_libs.txt
+zip_safe flag not set; analyzing archive contents...
+__pycache__.MultiScaleDeformableAttention.cpython-37: module references __file__
+creating dist
+creating 'dist/MultiScaleDeformableAttention-1.0-py3.7-linux-x86_64.egg' and adding 'build/bdist.linux-x86_64/egg' to it
+removing 'build/bdist.linux-x86_64/egg' (and everything under it)
+Processing MultiScaleDeformableAttention-1.0-py3.7-linux-x86_64.egg
+removing '/mnt/lustre/zongdaoming/.local/lib/python3.7/site-packages/MultiScaleDeformableAttention-1.0-py3.7-linux-x86_64.egg' (and everything under it)
+creating /mnt/lustre/zongdaoming/.local/lib/python3.7/site-packages/MultiScaleDeformableAttention-1.0-py3.7-linux-x86_64.egg
+Extracting MultiScaleDeformableAttention-1.0-py3.7-linux-x86_64.egg to /mnt/lustre/zongdaoming/.local/lib/python3.7/site-packages
+MultiScaleDeformableAttention 1.0 is already the active version in easy-install.pth
+
+Installed /mnt/lustre/zongdaoming/.local/lib/python3.7/site-packages/MultiScaleDeformableAttention-1.0-py3.7-linux-x86_64.egg
+Processing dependencies for MultiScaleDeformableAttention==1.0
+Finished processing dependencies for MultiScaleDeformableAttention==1.0
+writing list of installed files to 'install_multiscale_abstraction.txt'

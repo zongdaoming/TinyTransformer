@@ -1,0 +1,53 @@
+which: no hipcc in (/mnt/lustre/share/cuda-9.2/bin:/mnt/lustre/share/gcc/gcc-5.4/bin:/mnt/lustre/zongdaoming/.conda/envs/hoi/bin:/mnt/lustre/share/spring/conda_envs/miniconda3/bin:/mnt/lustre/share/spring/conda_envs/miniconda3/bin:/mnt/lustre/share/cuda-10.1/bin:/mnt/lustre/share/gcc/gcc-5.4/bin:/mnt/lustre/zongdaoming/.conda/envs/hoi/bin:/mnt/lustre/zongdaoming/.conda/envs/defdetr/bin:/mnt/lustre/share/spring/conda_envs/miniconda3/condabin:/mnt/lustre/share/spring:/mnt/lustre/share/spring/conda_envs/miniconda3/bin:/mnt/lustre/share/cuda-9.0/bin:/mnt/lustre/share/cuda-10.1/bin:/mnt/lustre/share/gcc/gcc-5.4/bin:/mnt/lustre/zongdaoming/.conda/envs/hoi/bin:/mnt/lustre/zongdaoming/.vscode-server-insiders/bin/53b58c89d44deb230dc526605561a1d42f6d1c50/bin:/mnt/lustre/share/intel64/bin:/mnt/lustre/share/spring:/mnt/lustre/share/platform/env:/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/ibutils/bin:/opt/puppetlabs/bin:/mnt/lustre/zongdaoming/bin)
+Torch version is 1.5.1
+Torch cuda is available True
+Torch cuda devices 1
+running build
+running build_py
+running build_ext
+running install
+running bdist_egg
+running egg_info
+writing MultiScaleDeformableAttention.egg-info/PKG-INFO
+writing dependency_links to MultiScaleDeformableAttention.egg-info/dependency_links.txt
+writing top-level names to MultiScaleDeformableAttention.egg-info/top_level.txt
+reading manifest file 'MultiScaleDeformableAttention.egg-info/SOURCES.txt'
+writing manifest file 'MultiScaleDeformableAttention.egg-info/SOURCES.txt'
+installing library code to build/bdist.linux-x86_64/egg
+running install_lib
+creating build/bdist.linux-x86_64/egg
+creating build/bdist.linux-x86_64/egg/modules
+copying build/lib.linux-x86_64-3.7/modules/__init__.py -> build/bdist.linux-x86_64/egg/modules
+copying build/lib.linux-x86_64-3.7/modules/ms_deform_attn_stackFrame.py -> build/bdist.linux-x86_64/egg/modules
+copying build/lib.linux-x86_64-3.7/modules/ms_deform_attn.py -> build/bdist.linux-x86_64/egg/modules
+copying build/lib.linux-x86_64-3.7/MultiScaleDeformableAttention.cpython-37m-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg
+creating build/bdist.linux-x86_64/egg/functions
+copying build/lib.linux-x86_64-3.7/functions/__init__.py -> build/bdist.linux-x86_64/egg/functions
+copying build/lib.linux-x86_64-3.7/functions/ms_deform_attn_func.py -> build/bdist.linux-x86_64/egg/functions
+byte-compiling build/bdist.linux-x86_64/egg/modules/__init__.py to __init__.cpython-37.pyc
+byte-compiling build/bdist.linux-x86_64/egg/modules/ms_deform_attn_stackFrame.py to ms_deform_attn_stackFrame.cpython-37.pyc
+byte-compiling build/bdist.linux-x86_64/egg/modules/ms_deform_attn.py to ms_deform_attn.cpython-37.pyc
+byte-compiling build/bdist.linux-x86_64/egg/functions/__init__.py to __init__.cpython-37.pyc
+byte-compiling build/bdist.linux-x86_64/egg/functions/ms_deform_attn_func.py to ms_deform_attn_func.cpython-37.pyc
+creating stub loader for MultiScaleDeformableAttention.cpython-37m-x86_64-linux-gnu.so
+byte-compiling build/bdist.linux-x86_64/egg/MultiScaleDeformableAttention.py to MultiScaleDeformableAttention.cpython-37.pyc
+creating build/bdist.linux-x86_64/egg/EGG-INFO
+copying MultiScaleDeformableAttention.egg-info/PKG-INFO -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying MultiScaleDeformableAttention.egg-info/SOURCES.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying MultiScaleDeformableAttention.egg-info/dependency_links.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying MultiScaleDeformableAttention.egg-info/top_level.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+writing build/bdist.linux-x86_64/egg/EGG-INFO/native_libs.txt
+zip_safe flag not set; analyzing archive contents...
+__pycache__.MultiScaleDeformableAttention.cpython-37: module references __file__
+creating 'dist/MultiScaleDeformableAttention-1.0-py3.7-linux-x86_64.egg' and adding 'build/bdist.linux-x86_64/egg' to it
+removing 'build/bdist.linux-x86_64/egg' (and everything under it)
+Processing MultiScaleDeformableAttention-1.0-py3.7-linux-x86_64.egg
+removing '/mnt/lustre/zongdaoming/.local/lib/python3.7/site-packages/MultiScaleDeformableAttention-1.0-py3.7-linux-x86_64.egg' (and everything under it)
+creating /mnt/lustre/zongdaoming/.local/lib/python3.7/site-packages/MultiScaleDeformableAttention-1.0-py3.7-linux-x86_64.egg
+Extracting MultiScaleDeformableAttention-1.0-py3.7-linux-x86_64.egg to /mnt/lustre/zongdaoming/.local/lib/python3.7/site-packages
+MultiScaleDeformableAttention 1.0 is already the active version in easy-install.pth
+
+Installed /mnt/lustre/zongdaoming/.local/lib/python3.7/site-packages/MultiScaleDeformableAttention-1.0-py3.7-linux-x86_64.egg
+Processing dependencies for MultiScaleDeformableAttention==1.0
+Finished processing dependencies for MultiScaleDeformableAttention==1.0
+writing list of installed files to 'install_multiscale_abstraction.txt'
