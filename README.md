@@ -1,4 +1,4 @@
-# LeViT: a Vision Transformer in ConvNet's Clothing for Faster Inference
+# TVD: a Tiny Transformer in ConvNet's Clothing for Faster Inference for Object Detection
 
 This repository contains PyTorch evaluation code, training code and pretrained models for LeViT.
 
