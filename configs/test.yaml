@@ -106,44 +106,44 @@ resume:
 
 ###################################################### Dateset  preparation ###################################################################
 meta_file_train:
-  # - /mnt/lustre/rws3/data_lists/20200120_salon_all/all.json # num_data: 82165
-  # - /mnt/lustre/rws3/data_lists/20200120_real_all/all.json  # num_data: 56317
-  # - /mnt/lustre/rws3/data_lists/real_data/body_filter.json # num_data: 7202
-  # - /mnt/lustre/rws3/data_lists/0316_beige_all_merge7_ass/20200229_20200316_beige_data_train.json # num_data: 769
-  # - /mnt/lustre/rws3/data_lists/0306_ass_SV_merge4_ass/train_refined.json # num_data: 7812
-  # - /mnt/lustre/rws3/data_lists/0323_ass_2_SV_merge4_ass/0319_0730_ass_merge.json # num_data: 3433
-  # - /mnt/lustre/rws3/data_lists/12191136_all_merge7_ass/all.json # num_data: 4246
-  # - /mnt/lustre/rws3/data_lists/20200706_salon_tiger/all_refined.json # num_data: 8530
-  # - /mnt/lustre/rws3/data_lists/20200908_tiger_detect_train/all_refined.json # num_data: 2640
-  # - /mnt/lustre/rws3/data_lists/float_0.5/train_2.5_0.5_merge.json # num_data: 1550
-  # - /mnt/lustre/rws3/data_lists/float_all_types/train_refined.json # num_data: 10188
+  - /mnt/lustre/rws3/data_lists/20200120_salon_all/all.json # num_data: 82165
+  - /mnt/lustre/rws3/data_lists/20200120_real_all/all.json  # num_data: 56317
+  - /mnt/lustre/rws3/data_lists/real_data/body_filter.json # num_data: 7202
+  - /mnt/lustre/rws3/data_lists/0316_beige_all_merge7_ass/20200229_20200316_beige_data_train.json # num_data: 769
+  - /mnt/lustre/rws3/data_lists/0306_ass_SV_merge4_ass/train_refined.json # num_data: 7812
+  - /mnt/lustre/rws3/data_lists/0323_ass_2_SV_merge4_ass/0319_0730_ass_merge.json # num_data: 3433
+  - /mnt/lustre/rws3/data_lists/12191136_all_merge7_ass/all.json # num_data: 4246
+  - /mnt/lustre/rws3/data_lists/20200706_salon_tiger/all_refined.json # num_data: 8530
+  - /mnt/lustre/rws3/data_lists/20200908_tiger_detect_train/all_refined.json # num_data: 2640
+  - /mnt/lustre/rws3/data_lists/float_0.5/train_2.5_0.5_merge.json # num_data: 1550
+  - /mnt/lustre/rws3/data_lists/float_all_types/train_refined.json # num_data: 10188
 
-  # - /mnt/lustre/share_data/chenjinghuan/rws_data/wujin_20200819_record_refined.json # num_data:758
-  # - /mnt/lustre/share_data/chenjinghuan/rws_data/1009_sv/0920model_labels_refined.json #num_data:2083
-  # - /mnt/lustre/rws3/data_lists/20200914_c02_bb09_bird/c02_bb09_brid_poker_chip_and_hold_poker.json # num_data:4661
-  # - /mnt/lustre/share_data/chenjinghuan/rws_data/20201014_sample_cash_results/0920labels_add20201002greencash.json #num_data: 2053
-  # - /mnt/lustre/rws3/data_lists/20201120_facedown_marker/20201120_20201228_marker_label.json #num_data: 1150
-  # - /mnt/lustre/rws3/data_lists/shoebox_roller/20200727_20210218_shoebox_label.json #num_data: 11407
+  - /mnt/lustre/share_data/chenjinghuan/rws_data/wujin_20200819_record_refined.json # num_data:758
+  - /mnt/lustre/share_data/chenjinghuan/rws_data/1009_sv/0920model_labels_refined.json #num_data:2083
+  - /mnt/lustre/rws3/data_lists/20200914_c02_bb09_bird/c02_bb09_brid_poker_chip_and_hold_poker.json # num_data:4661
+  - /mnt/lustre/share_data/chenjinghuan/rws_data/20201014_sample_cash_results/0920labels_add20201002greencash.json #num_data: 2053
+  - /mnt/lustre/rws3/data_lists/20201120_facedown_marker/20201120_20201228_marker_label.json #num_data: 1150
+  - /mnt/lustre/rws3/data_lists/shoebox_roller/20200727_20210218_shoebox_label.json #num_data: 11407
 
-  # - /mnt/lustre/rws3/data_lists/20201127_float_sunken/20201111_20201207_float_sunken.json #num_data: 3638
-  # - /mnt/lustre/rws3/data_lists/20201127_float_sunken/20201111_float_sunken_hardcase.json # num_data: 29344 
-  # - /mnt/lustre/share_data/chenjinghuan/rws_data/create_float_sunken_detect/labels_refined_blur.json # num_data: 2000
-  # - /mnt/lustre/rws3/data_lists/20201130_chipfill_train/20201130_20210113_chip_fill.json # num_data: 15933
-  # - /mnt/lustre/rws3/data_lists/20201217_s02_mb02_chip/20201217_20201225_s02_mb0102_chip.json # num_data: 6209
-  # - /mnt/lustre/share_data/chenjinghuan/rws_data/20201120_float_dabing_mix/20201117mix_20201104single_20201120short.json # num_data 10956
-  # - /mnt/lustre/rws3/data_lists/20200917_foreign_things/model_1022_all_bird_addmembercard_addpen.json #num_data: 5022
+  - /mnt/lustre/rws3/data_lists/20201127_float_sunken/20201111_20201207_float_sunken.json #num_data: 3638
+  - /mnt/lustre/rws3/data_lists/20201127_float_sunken/20201111_float_sunken_hardcase.json # num_data: 29344 
+  - /mnt/lustre/share_data/chenjinghuan/rws_data/create_float_sunken_detect/labels_refined_blur.json # num_data: 2000
+  - /mnt/lustre/rws3/data_lists/20201130_chipfill_train/20201130_20210113_chip_fill.json # num_data: 15933
+  - /mnt/lustre/rws3/data_lists/20201217_s02_mb02_chip/20201217_20201225_s02_mb0102_chip.json # num_data: 6209
+  - /mnt/lustre/share_data/chenjinghuan/rws_data/20201120_float_dabing_mix/20201117mix_20201104single_20201120short.json # num_data 10956
+  - /mnt/lustre/rws3/data_lists/20200917_foreign_things/model_1022_all_bird_addmembercard_addpen.json #num_data: 5022
   
-  # - /mnt/lustre/rws3/data_lists/20210125_c02bb01_float/c02bb01-0125_c02bb09-0222_a03bb06-0429.json #num_data: 4869
-  # - /mnt/lustre/rws3/data_lists/20210222_100k_chip/20210222_sv_100k_chip.json #num_data: 7000
-  # - /mnt/lustre/rws3/data_lists/20210222_100k_chip/20210222_20210309_bv_100k_chip.json #num_data: 12103
-  # - /mnt/lustre/rws3/data_lists/20210222_100k_chip/20210526_bv_float_sunken_100k.json #num_data: 9905
-  # - /mnt/lustre/rws3/data_lists/20210316_salon_mb01/20210114_20210322_mc23_a03_c02_mb01_b02.json #num_data: 5690
-  # - /mnt/lustre/rws3/data_lists/spread_data/20201028_20210526_beige_red_green_spread.json #num_data: 2578
+  - /mnt/lustre/rws3/data_lists/20210125_c02bb01_float/c02bb01-0125_c02bb09-0222_a03bb06-0429.json #num_data: 4869
+  - /mnt/lustre/rws3/data_lists/20210222_100k_chip/20210222_sv_100k_chip.json #num_data: 7000
+  - /mnt/lustre/rws3/data_lists/20210222_100k_chip/20210222_20210309_bv_100k_chip.json #num_data: 12103
+  - /mnt/lustre/rws3/data_lists/20210222_100k_chip/20210526_bv_float_sunken_100k.json #num_data: 9905
+  - /mnt/lustre/rws3/data_lists/20210316_salon_mb01/20210114_20210322_mc23_a03_c02_mb01_b02.json #num_data: 5690
+  - /mnt/lustre/rws3/data_lists/spread_data/20201028_20210526_beige_red_green_spread.json #num_data: 2578
   - /mnt/lustre/rws3/data_lists/jira/all.json #num_data: 531
 
 meta_file_test: 
-  # - /mnt/lustre/rws3/data_lists/11221028_all_merge7_ass/all.json # num_data: 21553
-  - /mnt/lustre/rws3/data_lists/jira/all.json #num_data: 531
+  - /mnt/lustre/rws3/data_lists/11221028_all_merge7_ass/all.json # num_data: 21553
+  # - /mnt/lustre/rws3/data_lists/jira/all.json #num_data: 531
 
 res_dir: /mnt/lustre/zongdaoming/models/SmallTransformer/SmallT/results/
 metrics_dir: /mnt/lustre/zongdaoming/models/SmallTransformer/SmallT/results/

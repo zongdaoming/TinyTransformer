@@ -120,7 +120,7 @@ def main(args):
     # define dataloader
     dataset_train = build_dataset(image_set='train', args=args)
     dataset_val = build_dataset(image_set='val', args=args)
-    
+
     if args.distributed:
         if args.cache_mode:
             sampler_train = samplers.NodeDistributedSampler(dataset_train)
@@ -165,7 +165,6 @@ def main(args):
         #     print('Missing Keys: {}'.format(missing_keys))
         # if len(unexpected_keys) > 0:
         #     print('Unexpected Keys: {}'.format(unexpected_keys))
-
         pretrain_dict = checkpoint['model']
         state_dict = model.state_dict()
         for k in ['head.weight', 'head.bias',

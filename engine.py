@@ -274,7 +274,8 @@ def evaluate(model, criterion, postprocessors, data_loader, args, device, output
                     'bbox':  filter_output['boxes'][idx,:].tolist(),
                     'score': float(filter_output['scores'][idx])
                     })
-            # accumulate predictions from all processes                     
+            # accumulate predictions from all processes
+            torch.distributed.barrier()                     
             res_list_all_gather.extend(list(itertools.chain.from_iterable(utils.all_gather(res_list))))                                       
             # No non_max_suppression settings
             # output = {k: v.detach().cpu().numpy() if k!='image_id' else v for k, v in output.items()}
@@ -290,7 +291,6 @@ def evaluate(model, criterion, postprocessors, data_loader, args, device, output
             #         'score': float(output['scores'][idx])
             #         })
             # res_list_all_gather.extend(list(itertools.chain.from_iterable(utils.all_gather(res_list))))
-            #   
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
