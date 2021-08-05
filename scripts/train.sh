@@ -35,3 +35,4 @@ srun --mpi=pmi2 -p ${PARTITION} \
     2>&1 | tee results/${expname}/train_log/train_${currenttime}.log
 
 # sh ./scripts/train.sh irdcRD 24 ./configs/test.yaml
+# sh ./scripts/train.sh test 8 ./configs/smca.yaml

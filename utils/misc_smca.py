@@ -1,19 +1,10 @@
-# ------------------------------------------------------------------------
-# Deformable DETR
-# Copyright (c) 2020 SenseTime. All Rights Reserved.
-# Licensed under the Apache License, Version 2.0 [see LICENSE for details]
-# ------------------------------------------------------------------------
-# Modified from DETR (https://github.com/facebookresearch/detr)
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-# ------------------------------------------------------------------------
-
 """
 Misc functions, including distributed helpers.
-
 Mostly copy-paste from torchvision references.
 """
+import pdb
 import os
-import math
 import subprocess
 import time
 from collections import defaultdict, deque
@@ -22,40 +13,12 @@ import pickle
 from typing import Optional, List
 
 import torch
-import torch.nn as nn
 import torch.distributed as dist
 from torch import Tensor
 
 # needed due to empty tensor bug in pytorch and torchvision 0.5
 import torchvision
-if float(torchvision.__version__[:3]) < 0.5:
-    import math
-    from torchvision.ops.misc import _NewEmptyTensorOp
-    def _check_size_scale_factor(dim, size, scale_factor):
-        # type: (int, Optional[List[int]], Optional[float]) -> None
-        if size is None and scale_factor is None:
-            raise ValueError("either size or scale_factor should be defined")
-        if size is not None and scale_factor is not None:
-            raise ValueError("only one of size or scale_factor should be defined")
-        if not (scale_factor is not None and len(scale_factor) != dim):
-            raise ValueError(
-                "scale_factor shape must match input shape. "
-                "Input is {}D, scale_factor size is {}".format(dim, len(scale_factor))
-            )
-    def _output_size(dim, input, size, scale_factor):
-        # type: (int, Tensor, Optional[List[int]], Optional[float]) -> List[int]
-        assert dim == 2
-        _check_size_scale_factor(dim, size, scale_factor)
-        if size is not None:
-            return size
-        # if dim is not 2 or scale_factor is iterable use _ntuple instead of concat
-        assert scale_factor is not None and isinstance(scale_factor, (int, float))
-        scale_factors = [scale_factor, scale_factor]
-        # math.floor might return float in py2.7
-        return [
-            int(math.floor(input.size(i + 2) * scale_factors[i])) for i in range(dim)
-        ]
-elif float(torchvision.__version__[:3]) < 0.7:
+if float(torchvision.__version__[:3]) < 0.7:
     from torchvision.ops import _new_empty_tensor
     from torchvision.ops.misc import _output_size
 
@@ -121,14 +84,6 @@ class SmoothedValue(object):
             max=self.max,
             value=self.value)
 
-def print_args(args):
-    print('CONFIG', flush=True)
-    print('---------------------------------------------------------', flush=True)
-    max_tab = 30
-    for k, v in vars(args).items():
-        cur_tab = len(k)
-        print(k + ' '*(max_tab - cur_tab + 1) + str(v))
-    print('---------------------------------------------------------', flush=True)
 
 def all_gather(data):
     """
@@ -315,22 +270,6 @@ def collate_fn(batch):
     batch[0] = nested_tensor_from_tensor_list(batch[0])
     return tuple(batch)
 
-def collate_fn_trip(batch):
-    batch = list(zip(*batch))
-    batch[0] = nested_tensor_from_tensor_list(batch[0])
-    batch[2] = nested_tensor_from_tensor_list(batch[2])
-    batch[3] = nested_tensor_from_tensor_list(batch[3])
-    return tuple(batch)
-
-def collate_fn_(batch):
-    batch = list(zip(*batch))
-    batch[0] = [nested_tensor_from_tensor_list([p[j] for p in batch[0]]) for j in range(len(batch[0][0]))]
-    return tuple(batch)
-
-def build_collate_fn(args):
-    temp = {'coco':collate_fn,'coco_trip':collate_fn_trip}
-    return temp[args.dataset_file]
-
 
 def _max_by_axis(the_list):
     # type: (List[List[int]]) -> List[int]
@@ -341,12 +280,37 @@ def _max_by_axis(the_list):
     return maxes
 
 
-def nested_tensor_from_tensor_list(tensor_list: List[Tensor], split=True):
+class NestedTensor(object):
+    def __init__(self, tensors, mask: Optional[Tensor]):
+        self.tensors = tensors
+        self.mask = mask
+
+    def to(self, device):
+        # type: (Device) -> NestedTensor # noqa
+        cast_tensor = self.tensors.to(device)
+        mask = self.mask
+        if mask is not None:
+            assert mask is not None
+            cast_mask = mask.to(device)
+        else:
+            cast_mask = None
+        return NestedTensor(cast_tensor, cast_mask)
+
+    def decompose(self):
+        return self.tensors, self.mask
+
+    def __repr__(self):
+        return str(self.tensors)
+
+
+def nested_tensor_from_tensor_list(tensor_list: List[Tensor]):
     # TODO make this more general
-    if split:
-        tensor_list = [tensor.split(3,dim=0) for tensor in tensor_list]
-        tensor_list = [item for sublist in tensor_list for item in sublist]
     if tensor_list[0].ndim == 3:
+        if torchvision._is_tracing():
+            # nested_tensor_from_tensor_list() does not export well to ONNX
+            # call _onnx_nested_tensor_from_tensor_list() instead
+            return _onnx_nested_tensor_from_tensor_list(tensor_list)
+
         # TODO make it support different-sized images
         max_size = _max_by_axis([list(img.shape) for img in tensor_list])
         # min_size = tuple(min(s) for s in zip(*[img.shape for img in tensor_list]))
@@ -364,32 +328,35 @@ def nested_tensor_from_tensor_list(tensor_list: List[Tensor], split=True):
     return NestedTensor(tensor, mask)
 
 
-class NestedTensor(object):
-    def __init__(self, tensors, mask: Optional[Tensor]):
-        self.tensors = tensors
-        self.mask = mask
+# _onnx_nested_tensor_from_tensor_list() is an implementation of
+# nested_tensor_from_tensor_list() that is supported by ONNX tracing.
+@torch.jit.unused
+def _onnx_nested_tensor_from_tensor_list(tensor_list: List[Tensor]) -> NestedTensor:
+    max_size = []
+    for i in range(tensor_list[0].dim()):
+        max_size_i = torch.max(torch.stack([img.shape[i] for img in tensor_list]).to(torch.float32)).to(torch.int64)
+        max_size.append(max_size_i)
+    max_size = tuple(max_size)
 
-    def to(self, device, non_blocking=False):
-        # type (Device) -> NestedTensor # noqa
-        cast_tensor = self.tensors.to(device, non_blocking=non_blocking)
-        mask = self.mask
-        if mask is not None:
-            assert mask is not None
-            cast_mask = mask.to(device, non_blocking=non_blocking)
-        else:
-            cast_mask = None
-        return NestedTensor(cast_tensor, cast_mask)
+    # work around for
+    # pad_img[: img.shape[0], : img.shape[1], : img.shape[2]].copy_(img)
+    # m[: img.shape[1], :img.shape[2]] = False
+    # which is not yet supported in onnx
+    padded_imgs = []
+    padded_masks = []
+    for img in tensor_list:
+        padding = [(s1 - s2) for s1, s2 in zip(max_size, tuple(img.shape))]
+        padded_img = torch.nn.functional.pad(img, (0, padding[2], 0, padding[1], 0, padding[0]))
+        padded_imgs.append(padded_img)
 
-    def record_stream(self, *args, **kwargs):
-        self.tensors.record_stream(*args, **kwargs)
-        if self.mask is not None:
-            self.mask.record_stream(*args, **kwargs)
+        m = torch.zeros_like(img[0], dtype=torch.int, device=img.device)
+        padded_mask = torch.nn.functional.pad(m, (0, padding[2], 0, padding[1]), "constant", 1)
+        padded_masks.append(padded_mask.to(torch.bool))
 
-    def decompose(self):
-        return self.tensors, self.mask
+    tensor = torch.stack(padded_imgs)
+    mask = torch.stack(padded_masks)
 
-    def __repr__(self):
-        return str(self.tensors)
+    return NestedTensor(tensor, mask=mask)
 
 
 def setup_for_distributed(is_master):
@@ -426,52 +393,21 @@ def get_rank():
         return 0
     return dist.get_rank()
 
-
-def get_local_size():
-    if not is_dist_avail_and_initialized():
-        return 1
-    return int(os.environ['LOCAL_SIZE'])
-
-
-def get_local_rank():
-    if not is_dist_avail_and_initialized():
-        return 0
-    return int(os.environ['LOCAL_RANK'])
-
-
 def is_main_process():
     return get_rank() == 0
-
 
 def save_on_master(*args, **kwargs):
     if is_main_process():
         torch.save(*args, **kwargs)
-
 
 def init_distributed_mode(args):
     if 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
         args.rank = int(os.environ["RANK"])
         args.world_size = int(os.environ['WORLD_SIZE'])
         args.gpu = int(os.environ['LOCAL_RANK'])
-        args.dist_url = 'env://'
-        os.environ['LOCAL_SIZE'] = str(torch.cuda.device_count())
     elif 'SLURM_PROCID' in os.environ:
-        proc_id = int(os.environ['SLURM_PROCID'])
-        ntasks = int(os.environ['SLURM_NTASKS'])
-        node_list = os.environ['SLURM_NODELIST']
-        num_gpus = torch.cuda.device_count()
-        addr = subprocess.getoutput(
-            'scontrol show hostname {} | head -n1'.format(node_list))
-        os.environ['MASTER_PORT'] = str(args.port)
-        os.environ['MASTER_ADDR'] = addr
-        os.environ['WORLD_SIZE'] = str(ntasks)
-        os.environ['RANK'] = str(proc_id)
-        os.environ['LOCAL_RANK'] = str(proc_id % num_gpus)
-        os.environ['LOCAL_SIZE'] = str(num_gpus)
-        args.dist_url = 'env://'
-        args.world_size = ntasks
-        args.rank = proc_id
-        args.gpu = proc_id % num_gpus
+        args.rank = int(os.environ['SLURM_PROCID'])
+        args.gpu = args.rank % torch.cuda.device_count()
     else:
         print('Not using distributed mode')
         args.distributed = False
@@ -481,8 +417,8 @@ def init_distributed_mode(args):
 
     torch.cuda.set_device(args.gpu)
     args.dist_backend = 'nccl'
-    # print('| distributed init (rank {}): {}'.format(
-    #     args.rank, args.dist_url), flush=True)
+    print('| distributed init (rank {}): {}'.format(
+        args.rank, args.dist_url), flush=True)
     torch.distributed.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                          world_size=args.world_size, rank=args.rank)
     torch.distributed.barrier()
@@ -491,6 +427,7 @@ def init_distributed_mode(args):
 @torch.no_grad()
 def accuracy(output, target, topk=(1,)):
     """Computes the precision@k for the specified values of k"""
+#    pdb.set_trace()
     if target.numel() == 0:
         return [torch.zeros([], device=output.device)]
     maxk = max(topk)
@@ -505,7 +442,6 @@ def accuracy(output, target, topk=(1,)):
         correct_k = correct[:k].view(-1).float().sum(0)
         res.append(correct_k.mul_(100.0 / batch_size))
     return res
-
 
 def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corners=None):
     # type: (Tensor, Optional[List[int]], Optional[float], str, Optional[bool]) -> Tensor
@@ -522,43 +458,6 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
 
         output_shape = _output_size(2, input, size, scale_factor)
         output_shape = list(input.shape[:-2]) + list(output_shape)
-        if float(torchvision.__version__[:3]) < 0.5:
-            return _NewEmptyTensorOp.apply(input, output_shape)
         return _new_empty_tensor(input, output_shape)
     else:
         return torchvision.ops.misc.interpolate(input, size, scale_factor, mode, align_corners)
-
-
-def get_total_grad_norm(parameters, norm_type=2):
-    parameters = list(filter(lambda p: p.grad is not None, parameters))
-    norm_type = float(norm_type)
-    device = parameters[0].grad.device
-    total_norm = torch.norm(torch.stack([torch.norm(p.grad.detach(), norm_type).to(device) for p in parameters]),
-                            norm_type)
-    return total_norm
-
-def inverse_sigmoid(x, eps=1e-5):
-    x = x.clamp(min=0, max=1)
-    x1 = x.clamp(min=eps)
-    x2 = (1 - x).clamp(min=eps)
-    return torch.log(x1/x2)
-
-def replace_batchnorm(net):
-    for child_name, child in net.named_children():
-        if hasattr(child, 'fuse'):
-            setattr(net, child_name, child.fuse())
-        elif isinstance(child, torch.nn.Conv2d):
-            child.bias = torch.nn.Parameter(torch.zeros(child.weight.size(0)))
-        elif isinstance(child, torch.nn.BatchNorm2d):
-            setattr(net, child_name, torch.nn.Identity())
-        else:
-            replace_batchnorm(child)
-
-def replace_layernorm(net):
-    import apex
-    for child_name, child in net.named_children():
-        if isinstance(child, torch.nn.LayerNorm):
-            setattr(net, child_name, apex.normalization.FusedLayerNorm(
-                child.weight.size(0)))
-        else:
-            replace_layernorm(child)

@@ -30,17 +30,21 @@ import torch.nn.functional as F
 from utils import box_ops
 from utils.misc_n import (NestedTensor, nested_tensor_from_tensor_list,
                        accuracy, get_world_size, interpolate,
-                       is_dist_avail_and_initialized, inverse_sigmoid)
+                       is_dist_avail_and_initialized, inverse_sigmoid, replace_batchnorm, replace_layernorm)
 from .matcher import build_matcher
 from timm.models.vision_transformer import trunc_normal_
 from .segmentation import (DETRsegm, PostProcessPanoptic, PostProcessSegm,
                            dice_loss, sigmoid_focal_loss)
 
+import copy
+from typing import Optional, List
 
+import torch
+import torch.nn.functional as F
+from torch import nn, Tensor
 
 
 # FLOPS_COUNTER = 0
-
 class Conv2d_BN(torch.nn.Sequential):
     def __init__(self, a, b, ks=1, stride=1, pad=0, dilation=1,
                  groups=1, bn_weight_init=1, resolution=-10000):
@@ -69,8 +73,6 @@ class Conv2d_BN(torch.nn.Sequential):
         m.weight.data.copy_(w)
         m.bias.data.copy_(b)
         return m
-
-
 
 class Linear_BN(torch.nn.Sequential):
     def __init__(self, a, b, bn_weight_init=1, resolution=-100000):
@@ -102,7 +104,6 @@ class Linear_BN(torch.nn.Sequential):
         x = l(x)
         return bn(x.flatten(0, 1)).reshape_as(x)
 
-
 class BN_Linear(torch.nn.Sequential):
     def __init__(self, a, b, bias=True, std=0.02):
         super().__init__()
@@ -131,7 +132,6 @@ class BN_Linear(torch.nn.Sequential):
         m.bias.data.copy_(b)
         return m
 
-
 def b16(n, activation, resolution=224):
     return torch.nn.Sequential(
         Conv2d_BN(3, n // 8, 3, 2, 1, resolution=resolution),
@@ -155,7 +155,6 @@ class Residual(torch.nn.Module):
                                               device=x.device).ge_(self.drop).div(1 - self.drop).detach()
         else:
             return x + self.m(x)
-
 
 class Attention(torch.nn.Module):
     def __init__(self, dim, key_dim, num_heads=8,
@@ -323,10 +322,148 @@ class AttentionSubsample(torch.nn.Module):
         return x
 
 
-class LeViT(torch.nn.Module):
+def _get_clones(module, N):
+    return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
+
+
+def _get_activation_fn(activation):
+    """Return an activation function given a string"""
+    if activation == "relu":
+        return F.relu
+    if activation == "gelu":
+        return F.gelu
+    if activation == "glu":
+        return F.glu
+    raise RuntimeError(F"activation should be relu/gelu, not {activation}.")
+
+
+class TransformerDecoder(nn.Module):
+
+    def __init__(self, decoder_layer, num_layers, norm=None, return_intermediate=False):
+        super().__init__()
+        self.layers = _get_clones(decoder_layer, num_layers)
+        self.num_layers = num_layers
+        self.norm = norm
+        self.return_intermediate = return_intermediate
+
+    def forward(self, tgt, memory,
+                tgt_mask: Optional[Tensor] = None,
+                memory_mask: Optional[Tensor] = None,
+                tgt_key_padding_mask: Optional[Tensor] = None,
+                memory_key_padding_mask: Optional[Tensor] = None,
+                pos: Optional[Tensor] = None,
+                query_pos: Optional[Tensor] = None):
+        output = tgt
+
+        intermediate = []
+
+        for layer in self.layers:
+            output = layer(output, memory, tgt_mask=tgt_mask,
+                           memory_mask=memory_mask,
+                           tgt_key_padding_mask=tgt_key_padding_mask,
+                           memory_key_padding_mask=memory_key_padding_mask,
+                           pos=pos, query_pos=query_pos)
+            if self.return_intermediate:
+                intermediate.append(self.norm(output))
+
+        if self.norm is not None:
+            output = self.norm(output)
+            if self.return_intermediate:
+                intermediate.pop()
+                intermediate.append(output)
+
+        if self.return_intermediate:
+            return torch.stack(intermediate)
+
+        return output.unsqueeze(0)
+
+class TransformerDecoderLayer(nn.Module):
+    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1,
+                 activation="relu", normalize_before=False):
+        super().__init__()
+        self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
+        self.multihead_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
+        # Implementation of Feedforward model
+        self.linear1 = nn.Linear(d_model, dim_feedforward)
+        self.dropout = nn.Dropout(dropout)
+        self.linear2 = nn.Linear(dim_feedforward, d_model)
+
+        self.norm1 = nn.LayerNorm(d_model)
+        self.norm2 = nn.LayerNorm(d_model)
+        self.norm3 = nn.LayerNorm(d_model)
+        self.dropout1 = nn.Dropout(dropout)
+        self.dropout2 = nn.Dropout(dropout)
+        self.dropout3 = nn.Dropout(dropout)
+
+        self.activation = _get_activation_fn(activation)
+        self.normalize_before = normalize_before
+
+    def with_pos_embed(self, tensor, pos: Optional[Tensor]):
+        return tensor if pos is None else tensor + pos
+
+    def forward_post(self, tgt, memory,
+                     tgt_mask: Optional[Tensor] = None,
+                     memory_mask: Optional[Tensor] = None,
+                     tgt_key_padding_mask: Optional[Tensor] = None,
+                     memory_key_padding_mask: Optional[Tensor] = None,
+                     pos: Optional[Tensor] = None,
+                     query_pos: Optional[Tensor] = None):
+        q = k = self.with_pos_embed(tgt, query_pos)
+        tgt2 = self.self_attn(q, k, value=tgt, attn_mask=tgt_mask,
+                              key_padding_mask=tgt_key_padding_mask)[0]
+        tgt = tgt + self.dropout1(tgt2)
+        tgt = self.norm1(tgt)
+        tgt2 = self.multihead_attn(query=self.with_pos_embed(tgt, query_pos),
+                                   key=self.with_pos_embed(memory, pos),
+                                   value=memory, attn_mask=memory_mask,
+                                   key_padding_mask=memory_key_padding_mask)[0]
+        tgt = tgt + self.dropout2(tgt2)
+        tgt = self.norm2(tgt)
+        tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt))))
+        tgt = tgt + self.dropout3(tgt2)
+        tgt = self.norm3(tgt)
+        return tgt
+
+    def forward_pre(self, tgt, memory,
+                    tgt_mask: Optional[Tensor] = None,
+                    memory_mask: Optional[Tensor] = None,
+                    tgt_key_padding_mask: Optional[Tensor] = None,
+                    memory_key_padding_mask: Optional[Tensor] = None,
+                    pos: Optional[Tensor] = None,
+                    query_pos: Optional[Tensor] = None):
+        tgt2 = self.norm1(tgt)
+        q = k = self.with_pos_embed(tgt2, query_pos)
+        tgt2 = self.self_attn(q, k, value=tgt2, attn_mask=tgt_mask,
+                              key_padding_mask=tgt_key_padding_mask)[0]
+        tgt = tgt + self.dropout1(tgt2)
+        tgt2 = self.norm2(tgt)
+        tgt2 = self.multihead_attn(query=self.with_pos_embed(tgt2, query_pos),
+                                   key=self.with_pos_embed(memory, pos),
+                                   value=memory, attn_mask=memory_mask,
+                                   key_padding_mask=memory_key_padding_mask)[0]
+        tgt = tgt + self.dropout2(tgt2)
+        tgt2 = self.norm3(tgt)
+        tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt2))))
+        tgt = tgt + self.dropout3(tgt2)
+        return tgt
+
+    def forward(self, tgt, memory,
+                tgt_mask: Optional[Tensor] = None,
+                memory_mask: Optional[Tensor] = None,
+                tgt_key_padding_mask: Optional[Tensor] = None,
+                memory_key_padding_mask: Optional[Tensor] = None,
+                pos: Optional[Tensor] = None,
+                query_pos: Optional[Tensor] = None):
+        if self.normalize_before:
+            return self.forward_pre(tgt, memory, tgt_mask, memory_mask,
+                                    tgt_key_padding_mask, memory_key_padding_mask, pos, query_pos)
+        return self.forward_post(tgt, memory, tgt_mask, memory_mask,
+                                 tgt_key_padding_mask, memory_key_padding_mask, pos, query_pos)
+
+
+class LeViTransfomer(torch.nn.Module):
     """ Vision Transformer with support for patch or hybrid CNN input stage
     """
-
     def __init__(self, img_size=224,
                  patch_size=16,
                  in_chans=3,
@@ -354,6 +491,7 @@ class LeViT(torch.nn.Module):
         self.patch_embed = hybrid_backbone
 
         self.blocks = []
+
         down_ops.append([''])
         resolution = img_size // patch_size
         for i, (ed, kd, dpth, nh, ar, mr, do) in enumerate(
@@ -376,7 +514,7 @@ class LeViT(torch.nn.Module):
                                       resolution=resolution),
                         ), drop_path))
             if do[0] == 'Subsample':
-                #('Subsample',key_dim, num_heads, attn_ratio, mlp_ratio, stride)
+                # ('Subsample', key_dim, num_heads, attn_ratio, mlp_ratio, stride)
                 resolution_ = (resolution - 1) // do[5] + 1
                 self.blocks.append(
                     AttentionSubsample(
@@ -397,11 +535,13 @@ class LeViT(torch.nn.Module):
                             Linear_BN(
                                 h, embed_dim[i + 1], bn_weight_init=0, resolution=resolution),
                         ), drop_path))
+
         self.blocks = torch.nn.Sequential(*self.blocks)
 
         # Classifier head
         self.head = BN_Linear(
             embed_dim[-1], num_classes) if num_classes > 0 else torch.nn.Identity()
+
         if distillation:
             self.head_dist = BN_Linear(
                 embed_dim[-1], num_classes) if num_classes > 0 else torch.nn.Identity()
@@ -414,51 +554,52 @@ class LeViT(torch.nn.Module):
         return {x for x in self.state_dict().keys() if 'attention_biases' in x}
 
     def forward(self, x):
+        
         x = self.patch_embed(x)
+        
         x = x.flatten(2).transpose(1, 2)
+
         x = self.blocks(x)
+        
         x = x.mean(1)
+        
         if self.distillation:
             x = self.head(x), self.head_dist(x)
             if not self.training:
                 x = (x[0] + x[1]) / 2
         else:
             x = self.head(x)
+        
         return x
 
-
-
-def build(C, D, X, N, drop_path, weights,
-                  num_classes, distillation, pretrained, fuse):
-    embed_dim = [int(x) for x in C.split('_')]
-    num_heads = [int(x) for x in N.split('_')]
-    depth = [int(x) for x in X.split('_')]
-    act = torch.nn.Hardswish
+def build(args):
+    # TODO embed_dim = [int(x) for x in args.embed_dim.split('_')]  
+    activation = torch.nn.Hardswish
     model = LeViT(
         patch_size=16,
-        embed_dim=embed_dim,
-        num_heads=num_heads,
-        key_dim=[D] * 3,
-        depth=depth,
+        embed_dim=args.embed_dim,
+        num_heads=args.num_heads,
+        key_dim=[args.key_dim] * 3,
+        depth=args.depth,
         attn_ratio=[2, 2, 2],
         mlp_ratio=[2, 2, 2],
         down_ops=[
             #('Subsample',key_dim, num_heads, attn_ratio, mlp_ratio, stride)
-            ['Subsample', D, embed_dim[0] // D, 4, 2, 2],
-            ['Subsample', D, embed_dim[1] // D, 4, 2, 2],
+            ['Subsample', args.key_dim, args.embed_dim[0] // args.key_dim, 4, 2, 2],
+            ['Subsample', args.key_dim, args.embed_dim[1] // args.key_dim, 4, 2, 2],
         ],
-        attention_activation=act,
-        mlp_activation=act,
-        hybrid_backbone=b16(embed_dim[0], activation=act),
-        num_classes=num_classes,
-        drop_path=drop_path,
-        distillation=distillation
+        attention_activation=activation,
+        mlp_activation=activation,
+        hybrid_backbone=b16(args.embed_dim[0], activation=activation),
+        num_classes=args.num_classes,
+        drop_path=args.drop_path,
+        distillation=args.distillation
     )
-    if pretrained:
-        checkpoint = torch.hub.load_state_dict_from_url(
-            weights, map_location='cpu')
-        model.load_state_dict(checkpoint['model'])
-    if fuse:
-        utils.replace_batchnorm(model)
+    if args.fuse:
+        replace_batchnorm(model)
+    # if pretrained:
+    #     checkpoint = torch.hub.load_state_dict_from_url(
+    #         weights, map_location='cpu')
+    #     model.load_state_dict(checkpoint['model'])
 
     return model

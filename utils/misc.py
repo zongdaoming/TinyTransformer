@@ -387,7 +387,6 @@ class NestedTensor(object):
     def __repr__(self):
         return str(self.tensors)
 
-
 def setup_for_distributed(is_master):
     """
     This function disables printing when not in master process
@@ -562,7 +561,6 @@ def inverse_sigmoid(x, eps=1e-5):
     x1 = x.clamp(min=eps)
     x2 = (1 - x).clamp(min=eps)
     return torch.log(x1/x2)
-
 
 # def broadcast_object_list(object_list, src=0, group=None):
 #     """
