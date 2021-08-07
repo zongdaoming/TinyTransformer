@@ -1,4 +1,4 @@
-model_name: smca_detr
+model_name: javis
 dataset_file: casino_multilist
 port: 2022
 
@@ -16,7 +16,7 @@ flip: &flip
 resize: &resize
  type: resize
  kwargs:
-   scales: [800,1100]
+   scales: [1000]
    max_size: 1333
 
 to_tensor: &to_tensor
@@ -48,47 +48,43 @@ clip_grad: 0.01 # Clip gradient norm (default: None, no clipping)
 clip_mode: agc # Gradient clipping mode. one of ("norm", "value", "agc")
 sgd: False
 
-# To achieve high-recall proposals, each pixel in the 
-# multi-scale feature maps would serve as an object query
-with_box_refine: True
-two_stage: False
-
-# Backbone
-backbone: resnet50 
-dilation: False
-position_embedding: sine # sine or learned
-position_embedding_scale:  
-num_feature_levels: 4
-
-# Transformer
-# enc_layers: 6
-enc_layers: 8
-# dec_layers: 6
-dec_layers: 8
-dim_feedforward: 1024
-hidden_dim: 256
+#  Encoder Configurations 
+#  Attention cinfiguration
+img_size: [1000,1333]
+patch_size: 16 # fixed due to Conv Operator
+embed_dim: [384,512,768]
+key_dim: 16
+depth: [2,3,4]
+num_heads: [4,6,8]
+drop_path: 0
+# attn_ratio: [2, 2, 2]
+# mlp_ratio: [2, 2, 2]
+# down_ops: [
+#            ['Subsample', args.key_dim, args.embed_dim[0] // args.key_dim, 4, 2, 2], 
+#            ['Subsample', args.key_dim, args.embed_dim[1] // args.key_dim, 4, 2, 2],
+#            [''],
+#            ]
+# Decoder Configurations
+dec_layers: 6
+dim_feedforward: 2048
+dec_hidden_dim: 256
 dropout: 0.1
-nheads: 8
+dec_nheads: 8
+num_queries: 400
 dec_n_points: 4
 enc_n_points: 4
-num_queries: 400
 pre_norm: False
+
 
 # Exponential Moving Average
 model_ema: True
 model_ema_decay: 0.99996
 model_ema_force_cpu: True
 
-
 # Segmentation
 masks: False
 # Loss
 aux_loss: True
-query_mixture: True
-head_mixture: True
-dynamic_scale:
-smooth:
-
 
 # Matcher
 set_cost_class: 2
@@ -103,7 +99,6 @@ cls_loss_coef: 2
 bbox_loss_coef: 5
 giou_loss_coef: 2
 focal_alpha: 0.25
-eos_coef: 0.1 # Relative classification weight of the no-object class
 
 
 ###################################################### Load Pre-trained Model or Resume checkpoint ############################################
@@ -151,7 +146,6 @@ meta_file_train:
 meta_file_test: 
   # - /mnt/lustre/rws3/data_lists/11221028_all_merge7_ass/all.json # num_data: 21553
   - /mnt/lustre/rws3/data_lists/jira/all.json #num_data: 531
-  
 
 res_dir: /mnt/lustre/zongdaoming/models/SmallT/results/
 metrics_dir: /mnt/lustre/zongdaoming/models/SmallT/results/
@@ -174,6 +168,6 @@ eval: False
 device: cuda
 pin_mem: True
 start_epoch: 0
-num_workers: 16
+num_workers: 0
 dist_url: 'env://'
 cache_mode: False

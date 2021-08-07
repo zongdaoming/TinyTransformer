@@ -19,15 +19,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import copy
 import math
 import torch
 import itertools
 from torch import nn
-import torch.nn.functional as F
-
 from utils import box_ops
+import torch.nn.functional as F
 from utils.misc_n import (NestedTensor, nested_tensor_from_tensor_list,
                        accuracy, get_world_size, interpolate,
                        is_dist_avail_and_initialized, inverse_sigmoid, replace_batchnorm, replace_layernorm)
@@ -35,7 +33,7 @@ from .matcher import build_matcher
 from timm.models.vision_transformer import trunc_normal_
 from .segmentation import (DETRsegm, PostProcessPanoptic, PostProcessSegm,
                            dice_loss, sigmoid_focal_loss)
-
+from .levit_transformer import build_transformer
 
 def _get_clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
@@ -55,7 +53,7 @@ class MLP(nn.Module):
 
 class JAVIS(nn.Module):
     """ This is the DETR module that performs object detection """
-    def __init__(self, backbone, transformer, num_classes, num_queries, aux_loss=False):
+    def __init__(self, transformer, num_classes, num_queries, aux_loss=False):
         """ Initializes the model.
         Parameters:
             backbone: torch module of the backbone to be used. See backbone.py
@@ -66,10 +64,11 @@ class JAVIS(nn.Module):
             aux_loss: True if auxiliary decoding losses (loss at each decoder layer) are to be used.
         """
         super().__init__()
+        self.num_classes = num_classes
         self.num_queries = num_queries
         self.transformer = transformer
         hidden_dim = transformer.d_model
-        self.class_embed = nn.Linear(hidden_dim, num_classes + 1)
+        self.class_embed = nn.Linear(hidden_dim, self.num_classes)
         self.bbox_embed = MLP(hidden_dim, hidden_dim, 4, 3)
         self.query_embed = nn.Embedding(num_queries, hidden_dim)
         # self.input_proj = nn.Conv2d(backbone.num_channels, hidden_dim, kernel_size=1)
@@ -93,11 +92,12 @@ class JAVIS(nn.Module):
         if isinstance(samples, (list, torch.Tensor)):
             samples = nested_tensor_from_tensor_list(samples)
         # features, pos = self.backbone(samples)
-        # src, mask = features[-1].decompose()
+        # src.shape torch.Size([3,3,1000,1333])
+        # mask.shape torch.Size([3,1000,1333])
+        src, mask = samples.decompose()
         # assert mask is not None
         # hs = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])[0]
-        hs  = self.transformer(samples,)
-
+        hs = self.transformer(src, mask, self.query_embed.weight)
         outputs_class = self.class_embed(hs)
         outputs_coord = self.bbox_embed(hs).sigmoid()
         out = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}
@@ -112,7 +112,6 @@ class JAVIS(nn.Module):
         # as a dict having both a Tensor and a list.
         return [{'pred_logits': a, 'pred_boxes': b}
                 for a, b in zip(outputs_class[:-1], outputs_coord[:-1])]
-
 
 class SetCriterion(nn.Module):
     """ This class computes the loss for DETR.
@@ -145,7 +144,7 @@ class SetCriterion(nn.Module):
 
         idx = self._get_src_permutation_idx(indices)
         target_classes_o = torch.cat([t["labels"][J] for t, (_, J) in zip(targets, indices)])
-        target_classes = torch.full(src_logits.shape[:2], self.num_classes,
+        target_classes = torch.full(src_logits.shape[:2], 0,
                                     dtype=torch.int64, device=src_logits.device)
         target_classes[idx] = target_classes_o
 
@@ -162,8 +161,7 @@ class SetCriterion(nn.Module):
             # TODO check
             losses['class_error'] = 100 - accuracy(src_logits[idx], target_classes_o)[0]
         return losses
-
-     
+         
     def loss_labels_detr(self, outputs, targets, indices, num_boxes, log=True):
         """Classification loss (NLL)
         targets dicts must contain the key "labels" containing a tensor of dim [nb_target_boxes]
@@ -173,7 +171,7 @@ class SetCriterion(nn.Module):
 
         idx = self._get_src_permutation_idx(indices)
         target_classes_o = torch.cat([t["labels"][J] for t, (_, J) in zip(targets, indices)])
-        target_classes = torch.full(src_logits.shape[:2], self.num_classes,
+        target_classes = torch.full(src_logits.shape[:2], 0,
                                     dtype=torch.int64, device=src_logits.device)
         target_classes[idx] = target_classes_o
 
@@ -330,7 +328,6 @@ class SetCriterion(nn.Module):
                 losses.update(l_dict)
         return losses
 
-
 class PostProcess(nn.Module):
     """ This module converts the model's output into the format expected by the coco api"""
     @torch.no_grad()
@@ -342,7 +339,6 @@ class PostProcess(nn.Module):
                           For evaluation, this must be the original image size (before any data augmentation)
                           For visualization, this should be the image size after data augment, but before padding
         """
-
         # outputs['pred_boxes']'s output is ( center_x, center_y, width,  heighth)
         # out_logits.shape: torch.Size([3, 1500, 10])  out_bbox.shape: torch.Size([3, 1500, 4])
         out_logits, out_bbox = outputs['pred_logits'], outputs['pred_boxes']
@@ -366,3 +362,40 @@ class PostProcess(nn.Module):
         results = [{'scores': s, 'labels': l, 'boxes': b} for s, l, b in zip(scores, labels, boxes)]
         return results
 
+def build(args):
+    device = torch.device(args.device)
+    transformer = build_transformer(args)
+    model = JAVIS(
+        transformer,
+        num_classes=args.num_classes,
+        num_queries=args.num_queries,
+        aux_loss=args.aux_loss,
+    )
+    if args.masks:
+        model = DETRsegm(model, freeze_detr=(args.frozen_weights is not None))
+    matcher = build_matcher(args)
+    weight_dict = {'loss_ce': args.cls_loss_coef, 'loss_bbox': args.bbox_loss_coef, 'loss_giou' : args.giou_loss_coef}
+    if args.masks:
+        weight_dict["loss_mask"] = args.mask_loss_coef
+        weight_dict["loss_dice"] = args.dice_loss_coef
+    # TODO this is a hack
+    if args.aux_loss:
+        aux_weight_dict = {}
+        for i in range(args.dec_layers - 1):
+            aux_weight_dict.update({k + f'_{i}': v for k, v in weight_dict.items()})
+        aux_weight_dict.update({k + f'_enc': v for k, v in weight_dict.items()})
+        weight_dict.update(aux_weight_dict)
+    losses = ['labels', 'boxes', 'cardinality']
+    if args.masks:
+        losses += ["masks"]
+    # num_classes, matcher, weight_dict, losses, focal_alpha=0.25
+    criterion = SetCriterion(args.num_classes, matcher, weight_dict, losses, focal_alpha=args.focal_alpha)
+    criterion.to(device)
+    postprocessors = {'bbox': PostProcess()}
+    if args.masks:
+        postprocessors['segm'] = PostProcessSegm()
+        if args.dataset_file == "coco_panoptic":
+            is_thing_map = {i: i <= 90 for i in range(201)}
+            postprocessors["panoptic"] = PostProcessPanoptic(is_thing_map, threshold=0.85)
+
+    return model, criterion, postprocessors

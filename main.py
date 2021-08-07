@@ -167,13 +167,12 @@ def main(args):
         #     print('Unexpected Keys: {}'.format(unexpected_keys))
         pretrain_dict = checkpoint['model']
         state_dict = model.state_dict()
-        for k in ['head.weight', 'head.bias',
-                  'head_dist.weight', 'head_dist.bias']:
+        for k in ['head.weight', 'head.bias','head_dist.weight', 'head_dist.bias']:
             if k in pretrain_dict and pretrain_dict[k].shape != state_dict[k].shape:
                 print(f"Removing key {k} from pretrained checkpoint")
                 del pretrain_dict[k]
-        model.load_state_dict(pretrain_dict, strict=False)        
-    ############################################################ Load Checkpoint #########################################################################
+        model.load_state_dict(pretrain_dict, strict=False)
+    ############################################################ Load Checkpoint ##########################################################################
     output_dir = Path(args.output_dir)
     if args.resume:
         if args.resume.startswith('https'):

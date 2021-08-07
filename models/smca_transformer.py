@@ -384,9 +384,6 @@ class GaussianMultiheadAttention(MultiheadAttention):
                 key_padding_mask=key_padding_mask, need_weights=need_weights,
                 attn_mask=attn_mask, gaussian=gaussian)
 
-
-
-
 class GradMultiply(torch.autograd.Function):
     @staticmethod
     def forward(ctx, x, scale):

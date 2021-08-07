@@ -112,7 +112,6 @@ class SMCADETR(nn.Module):
         hidden_dim = transformer.d_model
         # self.class_embed = nn.Linear(hidden_dim, num_classes + 1)
         self.class_embed = nn.Linear(hidden_dim, self.num_classes)
-#        pdb.set_trace()
         nn.init.constant_(self.class_embed.bias, bias_init_with_prob(0.01))
         self.bbox_embed = MLP(hidden_dim, hidden_dim, 4, 3)
         self.query_embed = nn.Embedding(num_queries, hidden_dim)
@@ -136,14 +135,20 @@ class SMCADETR(nn.Module):
                                 dictionnaries containing the two above keys for each decoder layer.
         """
 #        pdb.set_trace()
+        # if not isinstance(samples, NestedTensor):
+        #     samples = nested_tensor_from_tensor_list(samples)
+        import pdb
+        pdb.set_trace() 
         if isinstance(samples[0], (list, torch.Tensor)):
-            samples[0] =  (samples[0])
+            samples[0] = nested_tensor_from_tensor_list(samples[0])
 #        batch, channel, height, width = samples.decompose().shape
 #        height, width = samples.decompose().shape[2], samples.decompose().shape[3]
         features, pos = self.backbone(samples[0])
 #        h_w = samples[1][0]['size'].unsqueeze(0).unsqueeze(0)
         h_w = torch.stack([torch.stack([inst['size'] for inst in samples[1]])[:, 1], torch.stack([inst['size'] for inst in samples[1]])[:, 0]], dim=-1)
         h_w = h_w.unsqueeze(0)
+
+        
         src, mask = features[-1].decompose()
         assert mask is not None
         hs, points = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1], h_w)
