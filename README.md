@@ -106,3 +106,8 @@ We actively welcome your pull requests! Please see [CONTRIBUTING.md](.github/CON
 =======
 # TinyTransformer
 >>>>>>> c4cd47abeeafc15c1484bfa84b233e0065ec432c
+
+
+```
+https://www.paperdigest.org/topic/?topic=&year=&paper_id=cvpr-Zou_End-to-End_Human_Object_Interaction_Detection_With_HOI_Transformer_CVPR_2021_paper.html-2021-06-11
+```
