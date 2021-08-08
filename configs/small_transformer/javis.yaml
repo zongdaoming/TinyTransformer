@@ -1,4 +1,4 @@
-model_name: deformable_detr
+model_name: javis
 dataset_file: casino_multilist
 port: 2022
 
@@ -16,7 +16,7 @@ flip: &flip
 resize: &resize
  type: resize
  kwargs:
-   scales: [800,1100]
+   scales: [1000]
    max_size: 1333
 
 to_tensor: &to_tensor
@@ -38,7 +38,7 @@ lr_linear_proj_names: ['reference_points', 'sampling_offsets']
 lr_linear_proj_mult: 0.1
 batch_size: 3
 weight_decay: 0.0001  # LR decay rate (default: 0.0001)
-epochs: 100
+epochs: 300
 lr_drop: 40
 lr_drop_peochs:
 test_freq: 1
@@ -48,36 +48,37 @@ clip_grad: 0.01 # Clip gradient norm (default: None, no clipping)
 clip_mode: agc # Gradient clipping mode. one of ("norm", "value", "agc")
 sgd: False
 
-# To achieve high-recall proposals, each pixel in the 
-# multi-scale feature maps would serve as an object query
-with_box_refine: True
-two_stage: False
-
-# Backbone
-backbone: resnet50 
-dilation: False
-position_embedding: sine # sine or learned
-position_embedding_scale:  
-num_feature_levels: 4
-
-# Transformer
-# enc_layers: 6
-enc_layers: 8
-# dec_layers: 6
-dec_layers: 8
-dim_feedforward: 1024
-hidden_dim: 256
+#  Encoder Configurations 
+#  Attention cinfiguration
+img_size: [1000,1333]
+patch_size: 16 # patch_size=16 is fixed due to Conv operator
+embed_dim: [384,512,768] # C
+key_dim: 16 # D
+depth: [2,3,4] # X
+num_heads: [4,6,8] # N 
+drop_path: 0
+# attn_ratio: [2, 2, 2]
+# mlp_ratio: [2, 2, 2]
+# down_ops: [
+#            ['Subsample', args.key_dim, args.embed_dim[0] // args.key_dim, 4, 2, 2], 
+#            ['Subsample', args.key_dim, args.embed_dim[1] // args.key_dim, 4, 2, 2],
+#            [''],
+#            ]
+# Decoder Configurations
+dec_layers: 6
+dec_hidden_dim: 768
+dim_feedforward: 2048
 dropout: 0.1
-nheads: 8
+dec_nheads: 8
 num_queries: 400
 dec_n_points: 4
 enc_n_points: 4
+pre_norm: False
 
 # Exponential Moving Average
 model_ema: True
 model_ema_decay: 0.99996
 model_ema_force_cpu: True
-
 
 # Segmentation
 masks: False
@@ -98,9 +99,8 @@ bbox_loss_coef: 5
 giou_loss_coef: 2
 focal_alpha: 0.25
 
-
 ###################################################### Load Pre-trained Model or Resume checkpoint ############################################
-finetune:
+# finetune:
 # finetune: /mnt/lustre/zongdaoming/models/SmallTransformer/SmallT/data/LeViT-256-13b5763e.
 resume:
 

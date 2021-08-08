@@ -33,6 +33,7 @@ import json
 import torch
 import torchvision
 import utils.misc as utils
+import torch.distributed as dist
 from utils.misc import all_gather
 
 from datasets.data_prefetcher_ml import data_prefetcher
@@ -220,7 +221,7 @@ def evaluate(model, criterion, postprocessors, data_loader, args, device, output
                                    iou_thresh=args.iou_thresh,
                                    metrics_csv=args.metrics_dir,
                                    )                                
-    res_list = []
+    res_list_all_gather= []
     for samples, targets in metric_logger.log_every(data_loader, 100, header):
         samples = samples.to(device)
         targets = [{k: v.to(device, non_blocking=True) if k!='image_id' else v for k, v in t.items()} for t in targets]
@@ -248,7 +249,6 @@ def evaluate(model, criterion, postprocessors, data_loader, args, device, output
         # Notice that  batch_sizes is also important
         # res = {target['image_id'].item(): output for target, output in zip(targets, results)}
         # results = [{'scores': s, 'labels': l, 'boxes': b} for s, l, b in zip(scores, labels, boxes)]
-        res_list_all_gather= []
         for target, output in zip(targets, results):
             """Non_max_suppression
             # Parameters:	
@@ -265,6 +265,7 @@ def evaluate(model, criterion, postprocessors, data_loader, args, device, output
             filter_output['boxes'] = torch.index_select(output['boxes'],0,indices)
             filter_output['scores'] = torch.index_select(output['scores'],0,indices)
             filter_output['labels'] = torch.index_select(output['labels'],0,indices)
+            res_list = []
             for idx in range(filter_output['boxes'].shape[0]):
                 res_list.append(
                     {
@@ -273,8 +274,9 @@ def evaluate(model, criterion, postprocessors, data_loader, args, device, output
                     'bbox':  filter_output['boxes'][idx,:].tolist(),
                     'score': float(filter_output['scores'][idx])
                     })
-            # accumulate predictions from all images                     
-            res_list_all_gather.extend(list(itertools.chain.from_iterable(utils.all_gather(res_list))))                                        
+            # accumulate predictions from all processes
+            torch.distributed.barrier()                     
+            res_list_all_gather.extend(list(itertools.chain.from_iterable(utils.all_gather(res_list))))                                       
             # No non_max_suppression settings
             # output = {k: v.detach().cpu().numpy() if k!='image_id' else v for k, v in output.items()}
             # res_list.append(output)
@@ -288,26 +290,19 @@ def evaluate(model, criterion, postprocessors, data_loader, args, device, output
             #         'bbox':  output['boxes'][idx,:].tolist(),
             #         'score': float(output['scores'][idx])
             #         })
-            # res_list_all_gather.extend(list(itertools.chain.from_iterable(utils.all_gather(res_list))))  
+            # res_list_all_gather.extend(list(itertools.chain.from_iterable(utils.all_gather(res_list))))
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
-    keys = {}
-    def filter_repeated_res(hoi_result):
-        if not keys.get(hoi_result['image_id'],None):
-            keys[hoi_result['image_id']] = 1
-            return True
-        else:
-            return False 
-    res_list_all_gather  = list(filter(lambda x: filter_repeated_res(x),res_list_all_gather))
     logger.info("Number of detection results: {}".format(len(res_list_all_gather)))
+    metric_res = casino_evaluator.eval(res_list_all_gather)
     if args.res_dir is not None and utils.is_main_process():
-        results_dir = os.path.join(args.res_dir, str(datetime.datetime.now()), '.json')  
-        with open(results_dir, 'w') as writer:
+        # results_file = os.path.join(args.res_dir, str(datetime.datetime.now())+'.json')  
+        results_file = os.path.join(args.res_dir, datetime.datetime.now().strftime('%Y-%m-%d')+'.json')  
+        with open(results_file, 'w') as writer:
             for idx_img, item in enumerate(res_list_all_gather):
                 writer.write(json.dumps(item) + '\n')
-    # with open(results_dir, 'w') as f:
-    #     json.dump(res_list_all_gather, f)
-    metric_res = casino_evaluator.eval(args.res_file)
+        # with open(results_dir, 'w') as f:
+        #     json.dump(res_list_all_gather, f)
     stats = {k: meter.global_avg for k, meter in metric_logger.meters.items()}
-    return stats, metric_res        
+    return stats, metric_res

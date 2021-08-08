@@ -30,48 +30,20 @@ normalize: &normalize
 
 transformer: [*flip, *resize, *to_tensor, *normalize]
 
-#  General
-lr: 0.0002  
-lr_backbone_names: ["backbone.0"]
-lr_backbone: 0.00002
-lr_linear_proj_names: ['reference_points', 'sampling_offsets']
-lr_linear_proj_mult: 0.1
-batch_size: 3
-weight_decay: 0.0001  # LR decay rate (default: 0.0001)
-epochs: 100
-lr_drop: 40
-lr_drop_peochs:
-test_freq: 1
-save_freq: 1
-clip_max_norm: 0.1
-clip_grad: 0.01 # Clip gradient norm (default: None, no clipping)
-clip_mode: agc # Gradient clipping mode. one of ("norm", "value", "agc")
-sgd: False
+#  General  Model Configurations
+embed_dim: [384,512, 768]
+num_heads: [4,6,8]
+depth: [2,3,4]
+key_dim: 16
 
-# To achieve high-recall proposals, each pixel in the 
-# multi-scale feature maps would serve as an object query
-with_box_refine: True
-two_stage: False
 
-# Backbone
-backbone: resnet50 
-dilation: False
-position_embedding: sine # sine or learned
-position_embedding_scale:  
-num_feature_levels: 4
 
-# Transformer
-# enc_layers: 6
-enc_layers: 8
-# dec_layers: 6
-dec_layers: 8
-dim_feedforward: 1024
-hidden_dim: 256
-dropout: 0.1
-nheads: 8
-num_queries: 400
-dec_n_points: 4
-enc_n_points: 4
+
+
+
+
+
+
 
 # Exponential Moving Average
 model_ema: True

@@ -255,7 +255,6 @@ def main(args):
         pin_memory=args.pin_mem,
         drop_last=True,
     )
-
     data_loader_val = torch.utils.data.DataLoader(
         dataset_val, sampler=sampler_val,
         batch_size=int(1.5 * args.batch_size),
@@ -263,7 +262,6 @@ def main(args):
         pin_memory=args.pin_mem,
         drop_last=False
     )
-
     mixup_fn = None
     mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
     if mixup_active:

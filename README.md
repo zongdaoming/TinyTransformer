@@ -1,5 +1,3 @@
-# TVD: a Tiny Transformer in ConvNet's Clothing for Faster Inference for Object Detection
-
 This repository contains PyTorch evaluation code, training code and pretrained models for LeViT.
 
 They obtain competitive tradeoffs in terms of speed / precision: 
@@ -102,3 +100,5 @@ This repository is released under the Apache 2.0 license as found in the [LICENS
 
 # Contributing
 We actively welcome your pull requests! Please see [CONTRIBUTING.md](.github/CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md) for more info.
+=======
+

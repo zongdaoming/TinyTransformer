@@ -54,10 +54,11 @@ class DeformableDETR(nn.Module):
             two_stage: two-stage Deformable DETR
         """
         super().__init__()
+        self.num_classes = num_classes
         self.num_queries = num_queries
         self.transformer = transformer
         hidden_dim = transformer.d_model
-        self.class_embed = nn.Linear(hidden_dim, num_classes)
+        self.class_embed = nn.Linear(hidden_dim, self.num_classes)
         self.bbox_embed = MLP(hidden_dim, hidden_dim, 4, 3)
         self.num_feature_levels = num_feature_levels
         if not two_stage:

@@ -77,7 +77,6 @@ def main(args):
             decay=args.model_ema_decay,
             device='cpu' if args.model_ema_force_cpu else '',
             resume='')
-
     model_without_ddp = model
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
@@ -120,6 +119,7 @@ def main(args):
     # define dataloader
     dataset_train = build_dataset(image_set='train', args=args)
     dataset_val = build_dataset(image_set='val', args=args)
+
     if args.distributed:
         if args.cache_mode:
             sampler_train = samplers.NodeDistributedSampler(dataset_train)
@@ -127,15 +127,17 @@ def main(args):
         else:
             # sampler_train = DistributedSampler(dataset_train)
             sampler_train = samplers.DistributedSampler(dataset_train)
-            sampler_val = samplers.DistributedSampler(
-                dataset_val, shuffle=False)
+            num_tasks = utils.get_world_size()
+            if len(dataset_val) % num_tasks != 0:
+                logger.info(
+                      'Warning: Enabling distributed evaluation with an eval dataset not divisible by process number.'
+                      'This will slightly alter validation results as extra duplicate entries are added to achieve '
+                      'equal num of samples per-process.')            
+            sampler_val = samplers.DistributedSampler(dataset_val, shuffle=False)
     else:
         sampler_train = torch.utils.data.RandomSampler(dataset_train)
         sampler_val = torch.utils.data.SequentialSampler(dataset_val)
-
     batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, args.batch_size, drop_last=True)
-    # data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,
-    #                                collate_fn=utils.collate_fn, num_workers=args.num_workers)
     data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,
                                    collate_fn=utils.collate_fn, num_workers=args.num_workers,
                                    pin_memory=args.pin_mem)
@@ -163,16 +165,14 @@ def main(args):
         #     print('Missing Keys: {}'.format(missing_keys))
         # if len(unexpected_keys) > 0:
         #     print('Unexpected Keys: {}'.format(unexpected_keys))
-
         pretrain_dict = checkpoint['model']
         state_dict = model.state_dict()
-        for k in ['head.weight', 'head.bias',
-                  'head_dist.weight', 'head_dist.bias']:
+        for k in ['head.weight', 'head.bias','head_dist.weight', 'head_dist.bias']:
             if k in pretrain_dict and pretrain_dict[k].shape != state_dict[k].shape:
                 print(f"Removing key {k} from pretrained checkpoint")
                 del pretrain_dict[k]
-        model.load_state_dict(pretrain_dict, strict=False)        
-    ############################################################ Load Checkpoint #########################################################################
+        model.load_state_dict(pretrain_dict, strict=False)
+    ############################################################ Load Checkpoint ##########################################################################
     output_dir = Path(args.output_dir)
     if args.resume:
         if args.resume.startswith('https'):

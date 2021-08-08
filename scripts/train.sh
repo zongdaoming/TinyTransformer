@@ -34,4 +34,8 @@ srun --mpi=pmi2 -p ${PARTITION} \
     --config $3 \
     2>&1 | tee results/${expname}/train_log/train_${currenttime}.log
 
-# sh ./scripts/train.sh irdcRD 8 ./configs/test.yaml
+# sh ./scripts/train.sh irdcRD 24 ./configs/test.yaml
+# sh ./scripts/train.sh test 8 ./configs/smca.yaml
+
+# sh ./scripts/train.sh irdcRD 8 ./configs/small_transformer/levit_c_128s.yaml
+# sh ./scripts/train.sh irdcRD 32 ./configs/small_transformer/levit_c_128s.yaml

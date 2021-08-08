@@ -1,17 +1,31 @@
-# ------------------------------------------------------------------------
-# Copyright (c) 2021 SenseTime Inc. All Rights Reserved.
-# Licensed under the Apache License, Version 2.0 [see LICENSE for details]
-# ------------------------------------------------------------------------
-# Modified from Swin-Transformer (https://github.com/microsoft/Swin-Transformer)
-# Copyright (c) Microsoft Corporation.
-# ------------------------------------------------------------------------
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
+# @file    :   backbone_detr.py
+# @time    :   2021/08/05 10:55:56
+# @authors  :  daoming zong, chunya liu
+# @version :   1.0
+# @contact :   zongdaoming@sensetime.com; liuchunya@sensetime.com
+# @desc    :   Backbone modules.
+# Copyright (c) 2021 SenseTime IRDC Group. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS-IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+from collections import OrderedDict
 import torch
+import torch.nn.functional as F
 import torchvision
 from torch import nn
-from typing import Dict, List
-import torch.nn.functional as F
-from collections import OrderedDict
 from torchvision.models._utils import IntermediateLayerGetter
+from typing import Dict, List
 
 from utils.misc import NestedTensor, is_main_process
 from .position_encoding import build_position_encoding
@@ -57,26 +71,17 @@ class FrozenBatchNorm2d(torch.nn.Module):
 
 class BackboneBase(nn.Module):
 
-    # def __init__(self, backbone: nn.Module, train_backbone: bool, num_channels: int, return_interm_layers: bool):
-    def __init__(self, backbone: nn.Module, train_backbone: bool, return_interm_layers: bool):
+    def __init__(self, backbone: nn.Module, train_backbone: bool, num_channels: int, return_interm_layers: bool):
         super().__init__()
         for name, parameter in backbone.named_parameters():
             if not train_backbone or 'layer2' not in name and 'layer3' not in name and 'layer4' not in name:
                 parameter.requires_grad_(False)
         if return_interm_layers:
-            # return_layers = {"layer1": "0", "layer2": "1", "layer3": "2", "layer4": "3"}
-            return_layers = {"layer2": "0", "layer3": "1", "layer4": "2",}
-            # import pdb
-            # pdb.set_trace()
-            self.strides = [8, 16, 32]
-            self.num_channels =  [128, 256, 512]
-            # self.strides = [8, 16, 32]
-            # self.num_channels = [512, 1024, 2048]
+            return_layers = {"layer1": "0", "layer2": "1", "layer3": "2", "layer4": "3"}
         else:
             return_layers = {'layer4': "0"}
-            self.strides = [1]
-            self.num_channels = [512]
         self.body = IntermediateLayerGetter(backbone, return_layers=return_layers)
+        self.num_channels = num_channels
 
     def forward(self, tensor_list: NestedTensor):
         xs = self.body(tensor_list.tensors)
@@ -98,54 +103,30 @@ class Backbone(BackboneBase):
         backbone = getattr(torchvision.models, name)(
             replace_stride_with_dilation=[False, False, dilation],
             pretrained=is_main_process(), norm_layer=FrozenBatchNorm2d)
-        # num_channels = 512 if name in ('resnet18', 'resnet34') else 2048
-        super().__init__(backbone, train_backbone, return_interm_layers)
-        if dilation:
-            self.strides[-1] = self.strides[-1] // 2
-
-
-# class Joiner(nn.Sequential):
-#     def __init__(self, backbone, position_embedding):
-#         super().__init__(backbone, position_embedding)
-#         self.strides = backbone.strides
-#         self.num_channels = backbone.num_channels
-
-#     def forward(self, tensor_list: NestedTensor):
-#         xs = self[0](tensor_list)
-#         out: List[NestedTensor] = []
-#         pos = []
-#         for name, x in xs.items():
-#             out.append(x)
-#             # position encoding
-#             pos.append(self[1](x).to(x.tensors.dtype))
-
-#         return out, pos
+        num_channels = 512 if name in ('resnet18', 'resnet34') else 2048
+        super().__init__(backbone, train_backbone, num_channels, return_interm_layers)
 
 
 class Joiner(nn.Sequential):
     def __init__(self, backbone, position_embedding):
         super().__init__(backbone, position_embedding)
-        self.strides = backbone.strides
-        self.num_channels = backbone.num_channels
 
     def forward(self, tensor_list: NestedTensor):
         xs = self[0](tensor_list)
         out: List[NestedTensor] = []
         pos = []
-        for name, x in sorted(xs.items()):
+        for name, x in xs.items():
             out.append(x)
-
-        # position encoding
-        for x in out:
+            # position encoding
             pos.append(self[1](x).to(x.tensors.dtype))
 
         return out, pos
 
+
 def build_backbone(args):
     position_embedding = build_position_encoding(args)
     train_backbone = args.lr_backbone > 0
-    # return_interm_layers = args.masks
-    return_interm_layers = args.masks or (args.num_feature_levels > 1)
+    return_interm_layers = args.masks
     backbone = Backbone(args.backbone, train_backbone, return_interm_layers, args.dilation)
     model = Joiner(backbone, position_embedding)
     model.num_channels = backbone.num_channels

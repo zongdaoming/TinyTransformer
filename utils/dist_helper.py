@@ -200,7 +200,6 @@ def setup_distributed(ddp=False, port=33334):
     sys.stdout.flush()
     return rank, world_size
 
-
 @functools.lru_cache()
 def _get_global_gloo_group():
     """
@@ -214,7 +213,6 @@ def _get_global_gloo_group():
     else:
         # return link.group.WORLD
         return dist.group.WORLD
-
 
 ## easy communicate picklable object across gpus
 def _serialize_to_tensor(data, group=None):
@@ -234,7 +232,6 @@ def _serialize_to_tensor(data, group=None):
     storage = torch.ByteStorage.from_buffer(buffer)
     tensor = torch.ByteTensor(storage).to(device=device)
     return tensor
-
 
 def _pad_to_largest_tensor(tensor, group):
     """
