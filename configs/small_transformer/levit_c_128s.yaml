@@ -52,7 +52,7 @@ sgd: False
 #  Attention cinfiguration
 img_size: [1000,1333]
 patch_size: 16 # patch_size=16 is fixed due to Conv operator
-embed_dim: [384,512,768] # C
+embed_dim: [128,256,384] # C
 key_dim: 16 # D
 depth: [2,3,4] # X
 num_heads: [4,6,8] # N 
@@ -66,7 +66,7 @@ drop_path: 0
 #            ]
 # Decoder Configurations
 dec_layers: 6
-dec_hidden_dim: 768
+dec_hidden_dim: 384
 dim_feedforward: 2048
 dropout: 0.1
 dec_nheads: 8
@@ -101,9 +101,8 @@ focal_alpha: 0.25
 
 ###################################################### Load Pre-trained Model or Resume checkpoint ############################################
 # finetune:
-# finetune: /mnt/lustre/zongdaoming/models/SmallTransformer/SmallT/data/LeViT-256-13b5763e.
+finetune: /mnt/lustre/zongdaoming/models/SmallT/data/LeViT-128S-96703c44.pth
 resume:
-
 ###################################################### Dateset  preparation ###################################################################
 meta_file_train:
   - /mnt/lustre/rws3/data_lists/20200120_salon_all/all.json # num_data: 82165

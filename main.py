@@ -77,7 +77,6 @@ def main(args):
             decay=args.model_ema_decay,
             device='cpu' if args.model_ema_force_cpu else '',
             resume='')
-
     model_without_ddp = model
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
@@ -130,13 +129,14 @@ def main(args):
             sampler_train = samplers.DistributedSampler(dataset_train)
             num_tasks = utils.get_world_size()
             if len(dataset_val) % num_tasks != 0:
-                logger.info('Warning: Enabling distributed evaluation with an eval dataset not divisible by process number. '
+                logger.info(
+                      'Warning: Enabling distributed evaluation with an eval dataset not divisible by process number.'
                       'This will slightly alter validation results as extra duplicate entries are added to achieve '
                       'equal num of samples per-process.')            
             sampler_val = samplers.DistributedSampler(dataset_val, shuffle=False)
     else:
         sampler_train = torch.utils.data.RandomSampler(dataset_train)
-        sampler_val = torch.utils.data.SequentialSampler(dataset_val)        
+        sampler_val = torch.utils.data.SequentialSampler(dataset_val)
     batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, args.batch_size, drop_last=True)
     data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,
                                    collate_fn=utils.collate_fn, num_workers=args.num_workers,

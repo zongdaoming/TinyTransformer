@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-# @file    :   levit_transformer.py
-# @time    :   2021/08/08 14:55:18
+# @file    :   levit.py
+# @time    :   2021/08/05 06:01:52
 # @authors  :  daoming zong, chunya liu
 # @version :   1.0
 # @contact :   zongdaoming@sensetime.com; liuchunya@sensetime.com
@@ -29,8 +29,10 @@ import torch.nn.functional as F
 from torch import nn, Tensor
 from typing import Optional, List
 from timm.models.vision_transformer import trunc_normal_
+import torch.nn.functional as F
 
 FLOPS_COUNTER = 0
+
 class Conv2d_BN(torch.nn.Sequential):
     def __init__(self, a, b, ks=1, stride=1, pad=0, dilation=1,
                  groups=1, bn_weight_init=1, resolution=[63,84]):
@@ -136,8 +138,8 @@ class Residual(torch.nn.Module):
 
     def forward(self, x):
         if self.training and self.drop > 0:
-            return x + self.m(x) * torch.rand(x.size(0), 1, 1, 1,
-                                              device=x.device).ge_(self.drop).div(1 - self.drop).detach()
+            return x + self.m(x) * torch.rand(x.size(0), 1, 1, 
+                device=x.device).ge_(self.drop).div(1 - self.drop).detach()
         else:
             return x + self.m(x)
 
@@ -158,10 +160,12 @@ class Attention(torch.nn.Module):
         self.dh = int(attn_ratio * key_dim) * num_heads
         self.attn_ratio = attn_ratio
         h = self.dh + nh_kd * 2
-        self.qkv = Conv2d_BN(dim, h, resolution=resolution)
-        self.proj = torch.nn.Sequential(activation(), Conv2d_BN(
+        # Linear_BN(                                                   │
+        #   (c): Linear(in_features=384, out_features=256, bias=False) │
+        #   (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        self.qkv = Linear_BN(dim, h, resolution=resolution)
+        self.proj = torch.nn.Sequential(activation(), Linear_BN(
             self.dh, dim, bn_weight_init=0, resolution=resolution))
-
         self.row = int(resolution[0])
         self.col = int(resolution[1])
         points = list(itertools.product(range(self.row), range(self.col)))
@@ -192,19 +196,21 @@ class Attention(torch.nn.Module):
         else:
             self.ab = self.attention_biases[:, self.attention_bias_idxs]
 
-    def forward(self, x):  # x (B,C,H,W)
-        B, C, H, W = x.shape
-        q, k, v = self.qkv(x).view(
-            B, self.num_heads, -1, H * W
-        ).split([self.key_dim, self.key_dim, self.d], dim=2)
+    def forward(self, x):  # x (B,N,C)
+        B, N, C = x.shape
+        qkv = self.qkv(x)
+        q, k, v = qkv.view(B, N, self.num_heads, -1).split([self.key_dim, self.key_dim, self.d], dim=3)
+        q = q.permute(0, 2, 1, 3)
+        k = k.permute(0, 2, 1, 3)
+        v = v.permute(0, 2, 1, 3)
         attn = (
-            (q.transpose(-2, -1) @ k) * self.scale
+            (q @ k.transpose(-2, -1)) * self.scale
             +
             (self.attention_biases[:, self.attention_bias_idxs]
              if self.training else self.ab)
         )
         attn = attn.softmax(dim=-1)
-        x = (v @ attn.transpose(-2, -1)).view(B, -1, H, W)
+        x = (attn @ v).transpose(1, 2).reshape(B, N, self.dh)
         x = self.proj(x)
         return x
 
@@ -242,12 +248,12 @@ class AttentionSubsample(torch.nn.Module):
         self.resolution_ = resolution_
         self.resolution_2 = int(resolution_[0]*resolution_[1])
         h = self.dh + nh_kd
-        self.kv = Conv2d_BN(in_dim, h, resolution=resolution)
+        self.kv = Linear_BN(in_dim, h, resolution=resolution)
         self.q = torch.nn.Sequential(
-            torch.nn.AvgPool2d(1, stride, 0),
-            Conv2d_BN(in_dim, nh_kd, resolution=resolution_))
-        self.proj = torch.nn.Sequential(
-            activation(), Conv2d_BN(self.d * num_heads, out_dim, resolution=resolution_))
+            Subsample(stride, resolution),
+            Linear_BN(in_dim, nh_kd, resolution=resolution_))
+        self.proj = torch.nn.Sequential(activation(), Linear_BN(
+            self.dh, out_dim, resolution=resolution_))
         self.stride = stride
         self.resolution = resolution
         self.row = int(resolution[0])
@@ -291,18 +297,18 @@ class AttentionSubsample(torch.nn.Module):
             self.ab = self.attention_biases[:, self.attention_bias_idxs]
 
     def forward(self, x):
-        B, C, H, W = x.shape
-        k, v = self.kv(x).view(B, self.num_heads, -1, H *
-                               W).split([self.key_dim, self.d], dim=2)
-        q = self.q(x).view(B, self.num_heads, self.key_dim, self.resolution_2)
-
-        attn = (q.transpose(-2, -1) @ k) * self.scale + \
+        B, N, C = x.shape
+        k, v = self.kv(x).view(B, N, self.num_heads, -
+                               1).split([self.key_dim, self.d], dim=3)
+        k = k.permute(0, 2, 1, 3)  # BHNC
+        v = v.permute(0, 2, 1, 3)  # BHNC
+        q = self.q(x).view(B, self.resolution_2, self.num_heads,
+                           self.key_dim).permute(0, 2, 1, 3)
+        attn = (q @ k.transpose(-2, -1)) * self.scale + \
             (self.attention_biases[:, self.attention_bias_idxs]
              if self.training else self.ab)
         attn = attn.softmax(dim=-1)
-
-        x = (v @ attn.transpose(-2, -1)).reshape(
-            B, -1, self.resolution_[0], self.resolution_[1])
+        x = (attn @ v).transpose(1, 2).reshape(B, -1, self.dh)
         x = self.proj(x)
         return x
 
@@ -340,7 +346,8 @@ class TransformerEncoder(torch.nn.Module):
                 zip(embed_dim, key_dim, depth, num_heads, attn_ratio, mlp_ratio, down_ops)):
             for _ in range(dpth):
                 self.blocks.append(
-                    Residual(Attention(
+                    Residual(
+                        Attention(
                         ed, kd, nh,
                         attn_ratio=ar,
                         activation=attention_activation,
@@ -350,39 +357,40 @@ class TransformerEncoder(torch.nn.Module):
                     h = int(ed * mr)
                     self.blocks.append(
                         Residual(torch.nn.Sequential(
-                            Conv2d_BN(ed, h, resolution=resolution),
+                            Linear_BN(ed, h, resolution=resolution),
                             mlp_activation(),
-                            Conv2d_BN(h, ed, bn_weight_init=0,
+                            Linear_BN(h, ed, bn_weight_init=0,
                                       resolution=resolution),
                         ), drop_path))
             if do[0] == 'Subsample':
                 resolution_ = [(x-1)// do[5] +1 for x in resolution]
                 self.blocks.append(
                     AttentionSubsample(
-                        *embed_dim[i:i + 2], key_dim=do[1], num_heads=do[2],
+                        *embed_dim[i:i + 2],
+                        key_dim=do[1],
+                        num_heads=do[2],
                         attn_ratio=do[3],
                         activation=attention_activation,
                         stride=do[5],
                         resolution=resolution,
-                        resolution_=resolution_))
+                        resolution_=resolution_)
+                )
                 resolution = resolution_
                 if do[4] > 0:  # mlp_ratio
                     h = int(embed_dim[i + 1] * do[4])
                     self.blocks.append(
                         Residual(torch.nn.Sequential(
-                            Conv2d_BN(embed_dim[i + 1], h,
+                            Linear_BN(embed_dim[i + 1], h,
                                       resolution=resolution),
                             mlp_activation(),
-                            Conv2d_BN(
+                            Linear_BN(
                                 h, embed_dim[i + 1], bn_weight_init=0, resolution=resolution),
                         ), drop_path))
         self.blocks = torch.nn.Sequential(*self.blocks)
         # Classifier head
         # self.head = BN_Linear(
-        #     embed_dim[-1], num_classes) if num_classes > 0 else torch.nn.Identity()
         # if distillation:
         #     self.head_dist = BN_Linear(
-        #         embed_dim[-1], num_classes) if num_classes > 0 else torch.nn.Identity()
         self.FLOPS = FLOPS_COUNTER
         FLOPS_COUNTER = 0
 
@@ -392,16 +400,16 @@ class TransformerEncoder(torch.nn.Module):
 
     def forward(self, x):
         x = self.patch_embed(x)
+        x = x.flatten(2).transpose(1, 2)
         x = self.blocks(x)
-        # x = torch.nn.functional.adaptive_avg_pool2d(x, 1).flatten(1)
+        # x = x.mean(1)
         # if self.distillation:
         #     x = self.head(x), self.head_dist(x)
         #     if not self.training:
         #         x = (x[0] + x[1]) / 2
         # else:
         #     x = self.head(x)
-        x = x.view(x.shape[0],x.shape[1],-1)
-        x = x.permute(2,0,1)
+        x = x.permute(1,0,2)
         return x
 
 def _get_clones(module, N):
@@ -493,6 +501,8 @@ class TransformerDecoderLayer(nn.Module):
                               key_padding_mask=tgt_key_padding_mask)[0]
         tgt = tgt + self.dropout1(tgt2)
         tgt = self.norm1(tgt)
+        # memory_key_padding_mask.shape
+        # torch.Size([3, 1333000])
         """
             - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
             the embedding dimension.
@@ -586,8 +596,8 @@ class Transformer(nn.Module):
             attn_ratio=[2, 2, 2],
             mlp_ratio=[2, 2, 2],
             down_ops=[
-                ['Subsample', key_dim, embed_dim[0] // key_dim, 4, 2, 2],
-                ['Subsample', key_dim, embed_dim[1] // key_dim, 4, 2, 2],
+                ['Subsample', 16, embed_dim[0] // 16, 4, 2, 2],
+                ['Subsample', 16, embed_dim[1] // 16, 4, 2, 2],
             ],
             attention_activation=self.activation,
             mlp_activation=self.activation,
