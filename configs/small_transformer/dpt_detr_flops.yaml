@@ -1,0 +1,168 @@
+model_name: dpt_detr
+dataset_file: casino_multilist
+port: 2022
+
+num_classes: &num_classes 10
+class_names: &class_names [
+        "__background__","body", "face", "hand", "chip",
+        "cash", "poker", "marker", "shoeboox", "roller"
+        ]
+
+flip: &flip
+ type: flip
+ kwargs:
+   flip_p: 0.5
+
+resize: &resize
+ type: resize
+ kwargs:
+  #  scales: [864]
+  #  max_size: 1152
+   height: 1344
+   width: 1344
+
+to_tensor: &to_tensor
+  type: to_tensor
+
+normalize: &normalize
+ type: normalize
+ kwargs:
+   mean: [0.485, 0.456, 0.406] # Imagenet pretrained statics
+   std: [0.229, 0.224, 0.225]
+
+transformer: [*flip, *resize, *to_tensor, *normalize]
+
+#  General
+lr: 0.0002 # learning rate
+# lr_backbone_names: ["backbone.0"]
+lr_backbone_names: ["backbone.", "patch_embed", "layers"]
+lr_backbone: 0.00002
+lr_linear_proj_names: ['reference_points', 'sampling_offsets']
+lr_linear_proj_mult: 0.1
+batch_size: 1
+weight_decay: 0.0001  # LR decay rate (default: 0.0001)
+epochs: 100
+lr_drop: 40
+lr_drop_peochs:
+test_freq: 1
+save_freq: 1
+clip_max_norm: 0.1
+clip_grad: 0.01 # Clip gradient norm (default: None, no clipping)
+clip_mode: agc # Gradient clipping mode. one of ("norm", "value", "agc")
+sgd: False
+
+#  Encoder configurations
+pretrained:
+# pretrained:
+# compute flops:
+input_res: [3,1344,1344]
+img_size: 1344
+backbone: dpt_medium # dpt_tiny, dpt_small, dpt_small_f4, dpt_medium
+# Decoder configurations
+dec_layers: 6
+dec_nheads: 8
+dim_feedforward: 1024
+dec_hidden_dim: 512
+dropout: 0.1
+num_queries: 1500
+dec_n_points: 4
+enc_n_points: 4
+pre_norm: False
+
+# Exponential Moving Average
+model_ema: True
+model_ema_decay: 0.99996
+model_ema_force_cpu: True
+
+# Segmentation
+masks: False
+# Loss
+aux_loss: True
+
+# Matcher
+set_cost_class: 2
+set_cost_bbox: 5
+set_cost_giou: 2
+iou_thresh: 0.5
+
+# Loss coefficients
+mask_loss_coef: 1
+dice_loss_coef: 1
+cls_loss_coef: 2
+bbox_loss_coef: 5
+giou_loss_coef: 2
+focal_alpha: 0.25
+eos_coef: 0.1
+
+###################################################### Load Pre-trained Model or Resume checkpoint ############################################
+finetune:
+# finetune: /mnt/lustre/zongdaoming/models/SmallTransformer/SmallT/data/LeViT-256-13b5763e.
+resume:
+
+###################################################### Dateset  preparation ###################################################################
+meta_file_train:
+  - /mnt/lustre/rws3/data_lists/20200120_salon_all/all.json # num_data: 82165
+  - /mnt/lustre/rws3/data_lists/20200120_real_all/all.json  # num_data: 56317
+  # - /mnt/lustre/rws3/data_lists/real_data/body_filter.json # num_data: 7202
+  # - /mnt/lustre/rws3/data_lists/0316_beige_all_merge7_ass/20200229_20200316_beige_data_train.json # num_data: 769
+  # - /mnt/lustre/rws3/data_lists/0306_ass_SV_merge4_ass/train_refined.json # num_data: 7812
+  # - /mnt/lustre/rws3/data_lists/0323_ass_2_SV_merge4_ass/0319_0730_ass_merge.json # num_data: 3433
+  # - /mnt/lustre/rws3/data_lists/12191136_all_merge7_ass/all.json # num_data: 4246
+  # - /mnt/lustre/rws3/data_lists/20200706_salon_tiger/all_refined.json # num_data: 8530
+  # - /mnt/lustre/rws3/data_lists/20200908_tiger_detect_train/all_refined.json # num_data: 2640
+  # - /mnt/lustre/rws3/data_lists/float_0.5/train_2.5_0.5_merge.json # num_data: 1550
+  # - /mnt/lustre/rws3/data_lists/float_all_types/train_refined.json # num_data: 10188
+
+  # - /mnt/lustre/share_data/chenjinghuan/rws_data/wujin_20200819_record_refined.json # num_data:758
+  # - /mnt/lustre/share_data/chenjinghuan/rws_data/1009_sv/0920model_labels_refined.json #num_data:2083
+  # - /mnt/lustre/rws3/data_lists/20200914_c02_bb09_bird/c02_bb09_brid_poker_chip_and_hold_poker.json # num_data:4661
+  # - /mnt/lustre/share_data/chenjinghuan/rws_data/20201014_sample_cash_results/0920labels_add20201002greencash.json #num_data: 2053
+  # - /mnt/lustre/rws3/data_lists/20201120_facedown_marker/20201120_20201228_marker_label.json #num_data: 1150
+  # - /mnt/lustre/rws3/data_lists/shoebox_roller/20200727_20210218_shoebox_label.json #num_data: 11407
+
+  # - /mnt/lustre/rws3/data_lists/20201127_float_sunken/20201111_20201207_float_sunken.json #num_data: 3638
+  # - /mnt/lustre/rws3/data_lists/20201127_float_sunken/20201111_float_sunken_hardcase.json # num_data: 29344 
+  # - /mnt/lustre/share_data/chenjinghuan/rws_data/create_float_sunken_detect/labels_refined_blur.json # num_data: 2000
+  # - /mnt/lustre/rws3/data_lists/20201130_chipfill_train/20201130_20210113_chip_fill.json # num_data: 15933
+  # - /mnt/lustre/rws3/data_lists/20201217_s02_mb02_chip/20201217_20201225_s02_mb0102_chip.json # num_data: 6209
+  # - /mnt/lustre/share_data/chenjinghuan/rws_data/20201120_float_dabing_mix/20201117mix_20201104single_20201120short.json # num_data 10956
+  # - /mnt/lustre/rws3/data_lists/20200917_foreign_things/model_1022_all_bird_addmembercard_addpen.json #num_data: 5022
+  
+  # - /mnt/lustre/rws3/data_lists/20210125_c02bb01_float/c02bb01-0125_c02bb09-0222_a03bb06-0429.json #num_data: 4869
+  # - /mnt/lustre/rws3/data_lists/20210222_100k_chip/20210222_sv_100k_chip.json #num_data: 7000
+  # - /mnt/lustre/rws3/data_lists/20210222_100k_chip/20210222_20210309_bv_100k_chip.json #num_data: 12103
+  # - /mnt/lustre/rws3/data_lists/20210222_100k_chip/20210526_bv_float_sunken_100k.json #num_data: 9905
+  # - /mnt/lustre/rws3/data_lists/20210316_salon_mb01/20210114_20210322_mc23_a03_c02_mb01_b02.json #num_data: 5690
+  # - /mnt/lustre/rws3/data_lists/spread_data/20201028_20210526_beige_red_green_spread.json #num_data: 2578
+  # - /mnt/lustre/rws3/data_lists/jira/all.json #num_data: 939
+
+meta_file_test:
+  - /mnt/lustre/rws3/data_lists/11221028_all_merge7_ass/all.json # num_data: 21553
+  # - /mnt/lustre/rws3/data_lists/jira/all.json #num_data: 939
+
+res_dir: /mnt/lustre/zongdaoming/models/SmallT/results/
+metrics_dir: /mnt/lustre/zongdaoming/models/SmallT/results/
+mix_root: /mnt/lustre/zongdaoming/models/SmallT/results/visualization
+analysis_json: /mnt/lustre/zongdaoming/models/SmallT/results/visualization/bad_case.json
+
+# Evaluator Parameters for Visualization
+# image_reader:
+#    image_dir:  /mnt/lustre/rws3/lustre/RWS_raw/real_data/salon_0103/
+#    color_mode: RGB
+rank_dataset: False
+bad_case_analyser: manual_0
+# img_root:
+# vis_mode:
+# ignore_mode:
+# analysis_json: /mnt/lustre/zongdaoming/models/deformable-detr/results/R50_DEFORMABLE_DETR_CASINO_SINGLE_LIST_TEST/bad_case.json
+coco_panoptic_path:
+remove_difficult: False
+# Distributed training settings
+seed: 2022
+eval: False
+device: cuda
+pin_mem: True
+start_epoch: 0
+num_workers: 8
+dist_url: 'env://'
+cache_mode: False

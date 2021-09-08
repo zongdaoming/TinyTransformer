@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-# @file    :   smca_transformer.py
+# @file    :   smca_transformer_linaer_to_conv.py
 # @time    :   2021/08/05 10:09:31
 # @authors  :  daoming zong, chunya liu
 # @version :   1.0

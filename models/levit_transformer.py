@@ -31,6 +31,47 @@ from typing import Optional, List
 from timm.models.vision_transformer import trunc_normal_
 
 FLOPS_COUNTER = 0
+
+class Hardswish(nn.Module):
+    r"""Applies the hardswish function, element-wise, as described in the paper:
+
+    `Searching for MobileNetV3`_.
+
+    .. math::
+        \text{Hardswish}(x) = \begin{cases}
+            0 & \text{if~} x \le -3, \\
+            x & \text{if~} x \ge +3, \\
+            x \cdot (x + 3) /6 & \text{otherwise}
+        \end{cases}
+
+    Args:
+        inplace: can optionally do the operation in-place. Default: ``False``
+
+    Shape:
+        - Input: :math:`(N, *)` where `*` means, any number of additional
+          dimensions
+        - Output: :math:`(N, *)`, same shape as the input
+
+    Examples::
+
+        >>> m = nn.Hardswish()
+        >>> input = torch.randn(2)
+        >>> output = m(input)
+
+    .. _`Searching for MobileNetV3`:
+        https://arxiv.org/abs/1905.02244
+    """
+    __constants__ = ['inplace']
+
+    inplace: bool
+
+    def __init__(self, inplace : bool = False) -> None:
+        super(Hardswish, self).__init__()
+        self.inplace = inplace
+
+    def forward(self, input: Tensor) -> Tensor:
+        return F.hardswish(input, self.inplace)
+
 class Conv2d_BN(torch.nn.Sequential):
     def __init__(self, a, b, ks=1, stride=1, pad=0, dilation=1,
                  groups=1, bn_weight_init=1, resolution=[63,84]):
@@ -292,6 +333,7 @@ class AttentionSubsample(torch.nn.Module):
 
     def forward(self, x):
         B, C, H, W = x.shape
+        
         k, v = self.kv(x).view(B, self.num_heads, -1, H *
                                W).split([self.key_dim, self.d], dim=2)
         q = self.q(x).view(B, self.num_heads, self.key_dim, self.resolution_2)
@@ -327,7 +369,6 @@ class TransformerEncoder(torch.nn.Module):
                  ):
         super().__init__()
         global FLOPS_COUNTER
-
         self.num_features = embed_dim[-1]
         self.embed_dim = embed_dim
         self.distillation = distillation
@@ -461,8 +502,7 @@ class TransformerDecoderLayer(nn.Module):
                  activation="relu", normalize_before=False):
         super().__init__()
         self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
-        self.multihead_attn = nn.MultiheadAttention(
-            d_model, nhead, dropout=dropout)
+        self.multihead_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
         # Implementation of feedforward mode
         self.linear1 = nn.Linear(d_model, dim_feedforward)
         self.dropout = nn.Dropout(dropout)
@@ -489,30 +529,41 @@ class TransformerDecoderLayer(nn.Module):
                      pos: Optional[Tensor] = None,
                      query_pos: Optional[Tensor] = None):
         q = k = self.with_pos_embed(tgt, query_pos)
-        tgt2 = self.self_attn(q, k, value=tgt, attn_mask=tgt_mask,
+        # tgt2 = self.self_attn(q, k, value=tgt, attn_mask=tgt_mask,
+        #                       key_padding_mask=tgt_key_padding_mask)[0]
+
+        tgt2 = self.self_attn(q, k, tgt, attn_mask=tgt_mask,
                               key_padding_mask=tgt_key_padding_mask)[0]
+
         tgt = tgt + self.dropout1(tgt2)
         tgt = self.norm1(tgt)
         """
-            - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
-            the embedding dimension.
-          
-            - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
-            the embedding dimension.
-          
-            - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
-            the embedding dimension.
-          
-            - key_padding_mask: :math:`(N, S)`, ByteTensor, where N is the batch size, S is the source sequence length.
-          
-            - attn_mask: 2D mask :math:`(L, S)` where L is the target sequence length, S is the source sequence length.
-            3D mask :math:`(N*num_heads, L, S)` where N is the batch size, L is the target sequence length,
-            S is the source sequence length.         
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+        the embedding dimension.
+        
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+        the embedding dimension.
+        
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+        the embedding dimension.
+        
+        - key_padding_mask: :math:`(N, S)`, ByteTensor, where N is the batch size, S is the source sequence length.
+        
+        - attn_mask: 2D mask :math:`(L, S)` where L is the target sequence length, S is the source sequence length.
+        3D mask :math:`(N*num_heads, L, S)` where N is the batch size, L is the target sequence length,
+        S is the source sequence length.         
         """ 
-        tgt2 = self.multihead_attn(query=self.with_pos_embed(tgt, query_pos),
-                                   key=self.with_pos_embed(memory, pos),
-                                   value=memory, attn_mask=memory_mask,
+        # tgt2 = self.multihead_attn(query=self.with_pos_embed(tgt, query_pos),
+        #                            key=self.with_pos_embed(memory, pos),
+        #                            value=memory, attn_mask=memory_mask,
+        #                            key_padding_mask=memory_key_padding_mask)[0]
+        
+        
+        tgt2 = self.multihead_attn(self.with_pos_embed(tgt, query_pos),
+                                   self.with_pos_embed(memory, pos),
+                                   memory, attn_mask=memory_mask,
                                    key_padding_mask=memory_key_padding_mask)[0]
+        
         tgt = tgt + self.dropout2(tgt2)
         tgt = self.norm2(tgt)
         tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt))))
@@ -529,14 +580,41 @@ class TransformerDecoderLayer(nn.Module):
                     query_pos: Optional[Tensor] = None):
         tgt2 = self.norm1(tgt)
         q = k = self.with_pos_embed(tgt2, query_pos)
-        tgt2 = self.self_attn(q, k, value=tgt2, attn_mask=tgt_mask,
+        # tgt2 = self.self_attn(q, k, value=tgt2, attn_mask=tgt_mask,
+        #                       key_padding_mask=tgt_key_padding_mask)[0]
+
+        """
+        - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
+        the embedding dimension.
+        
+        - key: :math:`(S, N, E)`, where S is the source sequence length, N is the batch size, E is
+        the embedding dimension.
+        
+        - value: :math:`(S, N, E)` where S is the source sequence length, N is the batch size, E is
+        the embedding dimension.
+        
+        - key_padding_mask: :math:`(N, S)`, ByteTensor, where N is the batch size, S is the source sequence length.
+        
+        - attn_mask: 2D mask :math:`(L, S)` where L is the target sequence length, S is the source sequence length.
+        3D mask :math:`(N*num_heads, L, S)` where N is the batch size, L is the target sequence length,
+        S is the source sequence length.         
+        """ 
+        tgt2 = self.self_attn(q, k, tgt2, attn_mask=tgt_mask,
                               key_padding_mask=tgt_key_padding_mask)[0]
+
         tgt = tgt + self.dropout1(tgt2)
         tgt2 = self.norm2(tgt)
-        tgt2 = self.multihead_attn(query=self.with_pos_embed(tgt2, query_pos),
-                                   key=self.with_pos_embed(memory, pos),
-                                   value=memory, attn_mask=memory_mask,
+
+        # tgt2 = self.multihead_attn(query=self.with_pos_embed(tgt2, query_pos),
+        #                            key=self.with_pos_embed(memory, pos),
+        #                            value=memory, attn_mask=memory_mask,
+        #                            key_padding_mask=memory_key_padding_mask)[0]
+
+        tgt2 = self.multihead_attn(self.with_pos_embed(tgt2, query_pos),
+                                   self.with_pos_embed(memory, pos),
+                                   memory, attn_mask=memory_mask,
                                    key_padding_mask=memory_key_padding_mask)[0]
+        
         tgt = tgt + self.dropout2(tgt2)
         tgt2 = self.norm3(tgt)
         tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt2))))

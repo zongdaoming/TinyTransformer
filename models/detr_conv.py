@@ -1,24 +1,3 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-# @file    :   smca_detr.py
-# @time    :   2021/08/05 10:07:01
-# @authors  :  daoming zong, chunya liu
-# @version :   1.0
-# @contact :   zongdaoming@sensetime.com; liuchunya@sensetime.com
-# @desc    :   None
-# Copyright (c) 2021 SenseTime IRDC Group. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS-IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 """
 DETR model and criterion classes.
@@ -28,29 +7,20 @@ import torch.nn.functional as F
 from torch import nn
 
 from utils import box_ops
-from utils.misc_smca import (NestedTensor, nested_tensor_from_tensor_list,
+from utils.misc import (NestedTensor, nested_tensor_from_tensor_list,
                        accuracy, get_world_size, interpolate,
                        is_dist_avail_and_initialized)
-
 from .backbone_detr import build_backbone
 from .matcher import build_matcher
 from .segmentation import (DETRsegm, PostProcessPanoptic, PostProcessSegm,
-                           dice_loss, sigmoid_focal_loss_smca)
+                           dice_loss, sigmoid_focal_loss)
+# from .transformer import build_transformer
+# from .transformer_linear_to_conv import build_transformer
+from .transformer_depthwise_separable import build_transformer
 
-from .smca_transformer import build_transformer
-import numpy as np
-#from fvcore.nn import sigmoid_focal_loss_jit
-#from mmcv.ops import sigmoid_focal_loss
-
-def bias_init_with_prob(prior_prob):
-    """initialize conv/fc bias value according to giving probablity."""
-    bias_init = float(-np.log((1 - prior_prob) / prior_prob))
-    return bias_init
-
-class SMCADETR(nn.Module):
+class DETR(nn.Module):
     """ This is the DETR module that performs object detection """
-    def __init__(self, backbone, transformer, num_classes, num_queries, 
-                 aux_loss=False, query_mixture=False):
+    def __init__(self, backbone, transformer, num_classes, num_queries, aux_loss=False):
         """ Initializes the model.
         Parameters:
             backbone: torch module of the backbone to be used. See backbone.py
@@ -61,21 +31,19 @@ class SMCADETR(nn.Module):
             aux_loss: True if auxiliary decoding losses (loss at each decoder layer) are to be used.
         """
         super().__init__()
-        self.num_classes = num_classes 
+        self.num_classes = num_classes
         self.num_queries = num_queries
         self.transformer = transformer
         hidden_dim = transformer.d_model
-        self.class_embed = nn.Linear(hidden_dim, num_classes + 1)
-        # self.class_embed = nn.Linear(hidden_dim, self.num_classes)
-        nn.init.constant_(self.class_embed.bias, bias_init_with_prob(0.01))
+        # self.class_embed = nn.Linear(hidden_dim, num_classes + 1)
+        self.class_embed = nn.Linear(hidden_dim, self.num_classes +1 )
         self.bbox_embed = MLP(hidden_dim, hidden_dim, 4, 3)
         self.query_embed = nn.Embedding(num_queries, hidden_dim)
         self.input_proj = nn.Conv2d(backbone.num_channels, hidden_dim, kernel_size=1)
         self.backbone = backbone
         self.aux_loss = aux_loss
-        self.query_mixture = query_mixture
 
-    def forward(self, samples):
+    def forward(self, samples: NestedTensor):
         """ The forward expects a NestedTensor, which consists of:
                - samples.tensor: batched images, of shape [batch_size x 3 x H x W]
                - samples.mask: a binary mask of shape [batch_size x H x W], containing 1 on padded pixels
@@ -89,37 +57,16 @@ class SMCADETR(nn.Module):
                - "aux_outputs": Optional, only returned when auxilary losses are activated. It is a list of
                                 dictionnaries containing the two above keys for each decoder layer.
         """
-        # import pdb
-        # pdb.set_trace()
-        # if not isinstance(samples, NestedTensor):
-        #     samples = nested_tensor_from_tensor_list(samples)
-        if isinstance(samples[0], (list, torch.Tensor)):
-            samples[0] = nested_tensor_from_tensor_list(samples[0])
-#        batch, channel, height, width = samples.decompose().shape
-#        height, width = samples.decompose().shape[2], samples.decompose().shape[3]
-        features, pos = self.backbone(samples[0])
-#        h_w = samples[1][0]['size'].unsqueeze(0).unsqueeze(0)
-        h_w = torch.stack([torch.stack([inst['size'] for inst in samples[1]])[:, 1], 
-                           torch.stack([inst['size'] for inst in samples[1]])[:, 0]], dim=-1)
-        h_w = h_w.unsqueeze(0)
+        if isinstance(samples, (list, torch.Tensor)):
+            samples = nested_tensor_from_tensor_list(samples)
+        features, pos = self.backbone(samples)
+
         src, mask = features[-1].decompose()
         assert mask is not None
-        hs, points = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1], h_w)
-        num_decoder = hs.shape[0]
-        outputs_class = self.class_embed(hs)
-        outputs_coord = self.bbox_embed(hs)
+        hs = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])[0]
 
-        points = points.unsqueeze(0).repeat(num_decoder, 1, 1, 1)
-        if self.query_mixture:
-#           pdb.set_trace()
-           outputs_coord[:, :, :, :2] = outputs_coord[:, :, :, :2] + points * torch.cat([torch.zeros(self.num_queries // 2), torch.ones(self.num_queries // 2)]).unsqueeze(-1).unsqueeze(0).unsqueeze(0).to(points)
-        else:
-           outputs_coord[:, :, :, :2] = outputs_coord[:, :, :, :2] + points
-        outputs_coord = outputs_coord.sigmoid()
-#        boxes1 = outputs_coord
-#        pdb.set_trace()
-#        if not (boxes1[:, :, :, 2:]>=boxes1[:, :, :, :2]).all():
-#        if (boxes1[:, 2:] >= boxes1[:, :2]).all()
+        outputs_class = self.class_embed(hs)
+        outputs_coord = self.bbox_embed(hs).sigmoid()
         out = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}
         if self.aux_loss:
             out['aux_outputs'] = self._set_aux_loss(outputs_class, outputs_coord)
@@ -155,9 +102,9 @@ class SetCriterion(nn.Module):
         self.weight_dict = weight_dict
         self.eos_coef = eos_coef
         self.losses = losses
-        empty_weight = torch.ones(num_classes + 1)
+        # empty_weight = torch.ones(self.num_classes + 1)
+        empty_weight = torch.ones(self.num_classes + 1)
         empty_weight[-1] = self.eos_coef
-        # empty_weight = torch.ones(self.num_classes)
         # empty_weight[0] = self.eos_coef
         self.register_buffer('empty_weight', empty_weight)
 
@@ -172,22 +119,14 @@ class SetCriterion(nn.Module):
         target_classes_o = torch.cat([t["labels"][J] for t, (_, J) in zip(targets, indices)])
         target_classes = torch.full(src_logits.shape[:2], self.num_classes,
                                     dtype=torch.int64, device=src_logits.device)
-        # target_classes = torch.full(src_logits.shape[:2], 0,
-        #                             dtype=torch.int64, device=src_logits.device)
         target_classes[idx] = target_classes_o
-        src_logits_orig = src_logits
-        src_logits = src_logits.flatten(0, 1)
-        target_classes = target_classes.flatten(0, 1)
-        # as long as target class is not equal to the no-object class, we can use the target_class != self.num_classes and
-        # self.num_classess here index the no-object class
-        pos_inds = torch.nonzero(target_classes != self.num_classes, as_tuple=True)[0]
-        labels = torch.zeros_like(src_logits)
-        labels[pos_inds, target_classes[pos_inds]] = 1
-        loss_ce = sigmoid_focal_loss_smca(src_logits, labels, num_boxes, mode="box")
+
+        loss_ce = F.cross_entropy(src_logits.transpose(1, 2), target_classes, self.empty_weight)
         losses = {'loss_ce': loss_ce}
+
         if log:
             # TODO this should probably be a separate loss, not hacked in this one here
-            losses['class_error'] = 100 - accuracy(src_logits_orig[idx], target_classes_o)[0]
+            losses['class_error'] = 100 - accuracy(src_logits[idx], target_classes_o)[0]
         return losses
 
     @torch.no_grad()
@@ -318,45 +257,6 @@ class SetCriterion(nn.Module):
 
         return losses
 
-class PostProcessSMCA(nn.Module):
-    """ This module converts the model's output into the format expected by the coco api"""
-    @torch.no_grad()
-    def forward(self, outputs, target_sizes):
-        """ Perform the computation
-        Parameters:
-            outputs: raw outputs of the model
-            target_sizes: tensor of dimension [batch_size x 2] containing the size of each images of the batch
-                          For evaluation, this must be the original image size (before any data augmentation)
-                          For visualization, this should be the image size after data augment, but before padding
-        """
-        out_logits, out_bbox = outputs['pred_logits'], outputs['pred_boxes']
-        assert len(out_logits) == len(target_sizes)
-        out_logits, out_bbox = outputs['pred_logits'], outputs['pred_boxes']
-        bs, query_len, category = out_logits.shape
-        prob = out_logits.sigmoid()
-        scores = prob.reshape(bs, -1)
-#        scores, labels = prob[..., :-1].max(-1)
-#        bs, _, category = out_logits.shape
-
-        # convert to [x0, y0, x1, y1] format
-        boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
-        boxes = boxes.unsqueeze(2).repeat(1, 1, category, 1).reshape(bs, -1, 4)
-        # and from relative [0, 1] to absolute [0, height] coordinates
-        img_h, img_w = target_sizes.unbind(1)
-        scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
-        boxes = boxes * scale_fct[:, None, :]
-        labels = torch.linspace(0, 91, steps=92).to(prob.device).unsqueeze(0).unsqueeze(0).repeat(bs, query_len, 1).reshape(bs, -1)
-        results = []
-        for i in range(bs):
-            result = dict()
-            scores_per_image, topk_indices = scores[i].topk(query_len, sorted=False)
-            labels_per_image = labels[i][topk_indices]
-            boxes_per_image = boxes[i][topk_indices]
-            result['scores'] = scores_per_image
-            result['labels'] = labels_per_image
-            result['boxes'] = boxes_per_image
-            results.append(result)
-        return results
 
 class PostProcess(nn.Module):
     """ This module converts the model's output into the format expected by the coco api"""
@@ -369,26 +269,23 @@ class PostProcess(nn.Module):
                           For evaluation, this must be the original image size (before any data augmentation)
                           For visualization, this should be the image size after data augment, but before padding
         """
-        # outputs['pred_boxes']'s output is ( center_x, center_y, width,  heighth)
-        # out_logits.shape: torch.Size([3, 1500, 10])  out_bbox.shape: torch.Size([3, 1500, 4])
         out_logits, out_bbox = outputs['pred_logits'], outputs['pred_boxes']
+
         assert len(out_logits) == len(target_sizes)
         assert target_sizes.shape[1] == 2
-        #prob.shape: torch.Size([3, 1500, 10])
-        prob = out_logits.sigmoid()
-        topk_values, topk_indexes = torch.topk(prob.view(out_logits.shape[0], -1), 100, dim=1)
-        scores = topk_values
-        # topk_boxes.shape: torch.Size([3, 100])
-        topk_boxes = topk_indexes // out_logits.shape[2]
-        # labels.shape: torch.Size([3, 100])
-        labels = topk_indexes % out_logits.shape[2]
+
+        prob = F.softmax(out_logits, -1)
+        scores, labels = prob[..., :-1].max(-1)
+
+        # convert to [x0, y0, x1, y1] format
         boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
-        boxes = torch.gather(boxes, 1, topk_boxes.unsqueeze(-1).repeat(1,1,4))
+        # and from relative [0, 1] to absolute [0, height] coordinates
         img_h, img_w = target_sizes.unbind(1)
         scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
         boxes = boxes * scale_fct[:, None, :]
 
         results = [{'scores': s, 'labels': l, 'boxes': b} for s, l, b in zip(scores, labels, boxes)]
+
         return results
 
 
@@ -408,7 +305,6 @@ class MLP(nn.Module):
 
 
 def build(args):
-    """
     # the `num_classes` naming here is somewhat misleading.
     # it indeed corresponds to `max_obj_id + 1`, where max_obj_id
     # is the maximum id for a class in your dataset. For example,
@@ -417,27 +313,28 @@ def build(args):
     # you should pass `num_classes` to be 2 (max_obj_id + 1).
     # For more details on this, check the following discussion
     # https://github.com/facebookresearch/detr/issues/108#issuecomment-650269223
-    num_classes = 20 if args.dataset_file != 'coco' else 91
-    if args.dataset_file == "coco_panoptic":
-        # for panoptic, we just add a num_classes that is large enough to hold
-        # max_obj_id + 1, but the exact value doesn't really matter
-        num_classes = 250
-    """   
+    # num_classes = 20 if args.dataset_file != 'coco' else 91
+    # if args.dataset_file == "coco_panoptic":
+    #     # for panoptic, we just add a num_classes that is large enough to hold
+    #     # max_obj_id + 1, but the exact value doesn't really matter
+    #     num_classes = 250
+    
+    
     device = torch.device(args.device)
     backbone = build_backbone(args)
     transformer = build_transformer(args)
-    model = SMCADETR(
+
+    model = DETR(
         backbone,
         transformer,
         num_classes=args.num_classes,
         num_queries=args.num_queries,
         aux_loss=args.aux_loss,
-        query_mixture=args.query_mixture,
     )
     if args.masks:
         model = DETRsegm(model, freeze_detr=(args.frozen_weights is not None))
     matcher = build_matcher(args)
-    weight_dict = {'loss_ce': args.cls_loss_coef, 'loss_bbox': args.bbox_loss_coef}
+    weight_dict = {'loss_ce': 1, 'loss_bbox': args.bbox_loss_coef}
     weight_dict['loss_giou'] = args.giou_loss_coef
     if args.masks:
         weight_dict["loss_mask"] = args.mask_loss_coef
@@ -452,7 +349,8 @@ def build(args):
     losses = ['labels', 'boxes', 'cardinality']
     if args.masks:
         losses += ["masks"]
-    criterion = SetCriterion(args.num_classes, matcher=matcher, weight_dict=weight_dict, eos_coef=args.eos_coef, losses=losses)
+    criterion = SetCriterion(args.num_classes, matcher=matcher, weight_dict=weight_dict,
+                             eos_coef=args.eos_coef, losses=losses)
     criterion.to(device)
     postprocessors = {'bbox': PostProcess()}
     if args.masks:

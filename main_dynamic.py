@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-# @file    :   main_.py
-# @time    :   2021/08/03 11:45:51
-# @authors  :  daoming zong, chunya liu
-# @version :   1.0
-# @contact :   zongdaoming@sensetime.com; liuchunya@sensetime.com
-# @desc    :   None
-# Copyright (c) 2021 SenseTime IRDC Group. All Rights Reserved.
+# -*- coding: utf-8 -*-
+# @author  :   naive dormin
+# @time    :   2021/09/06 17:35:44
+# @version :   1.0.0
+#
+# Copyright (c) 2021 ECNU PRML. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,8 +40,70 @@ from utils import dynamic_load_trained_modules
 from utils.log_helper import default_logger as logger
 from timm.utils import get_state_dict, ModelEma
 
-# from models.alexnet import alexnet
-# from models.convert import convert_v2
+import argparse
+import datetime
+import numpy as np
+import time
+import torch
+import torch.backends.cudnn as cudnn
+import json
+from pathlib import Path
+from timm.data import Mixup
+from timm.models import create_model
+from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
+from timm.scheduler import create_scheduler
+from timm.optim import create_optimizer
+from timm.utils import NativeScaler, get_state_dict, ModelEma
+from torch.nn import parameter
+
+from datasets import build_dataset
+from engine import train_one_epoch, evaluate
+from losses import DistillationLoss, DiffPruningLoss, DistillDiffPruningLoss
+from samplers import RASampler
+import utils
+from functools import partial
+import torch.nn as nn
+
+import math
+import shutil
+
+def get_param_groups(model, weight_decay):
+    decay = []
+    no_decay = []
+    predictor = []
+    for name, param in model.named_parameters():
+        if 'predictor' in name:
+            predictor.append(param)
+        elif not param.requires_grad:
+            continue  # frozen weights
+        elif 'cls_token' in name or 'pos_embed' in name:
+            continue  # frozen weights
+        elif len(param.shape) == 1 or name.endswith(".bias"):
+            no_decay.append(param)
+        else:
+            decay.append(param)
+    return [
+        {'params': predictor, 'weight_decay': weight_decay, 'name': 'predictor'},
+        {'params': no_decay, 'weight_decay': 0., 'name': 'base_no_decay'},
+        {'params': decay, 'weight_decay': weight_decay, 'name': 'base_decay'}
+        ]
+
+def adjust_learning_rate(param_groups, init_lr, min_lr, step, max_step, warming_up_step=2, warmup_predictor=False, base_multi=0.1):
+    cos_lr = (math.cos(step / max_step * math.pi) + 1) * 0.5
+    cos_lr = min_lr + cos_lr * (init_lr - min_lr)
+    if warmup_predictor and step < 1:
+        cos_lr = init_lr * 0.01
+    if step < warming_up_step:
+        backbone_lr = 0
+    else:
+        backbone_lr = min(init_lr * 0.01, cos_lr)
+    print('## Using lr  %.7f for BACKBONE, cosine lr = %.7f for PREDICTOR' % (backbone_lr, cos_lr))
+    for param_group in param_groups:
+        if param_group['name'] == 'predictor':
+            param_group['lr'] = cos_lr
+        else:
+            param_group['lr'] = backbone_lr # init_lr * 0.01 # cos_lr * base_multi
+
 
 def main(args):
     # load config
@@ -72,27 +132,7 @@ def main(args):
     torch.backends.cudnn.benchmark = True
 
     model, criterion, postprocessors = build_model(args)
-    # model = alexnet(False)
     model.to(device)
-
-    # import spring.nart.tools.pytorch as pytorch
-    
-    # input_names = ['data']
-    # # model = model.cpu()
-    # with pytorch.convert_mode():
-    #     convert_v2(
-    #     model, [(3, 512, 512)],
-    #     filename='Detr',
-    #     input_names=input_names,
-    #     output_names=['FFN.blobs.classification', 'FFN.blobs.localization'],
-    #     # output_names=['FFN.blobs.classification'],
-    #     verbose=True,
-
-    #     )
-    # logger.info('=============tocaffe done=================')
-    # return
-
-    # compute flops for small transformers
     macs, params = get_model_complexity_info(model, tuple(args.input_res), as_strings=False, print_per_layer_stat=True, verbose=True)
     logger.info('{:<30}  {:<8}'.format('Computational complexity: ', macs))
     logger.info('{:<30}  {:<8}'.format('Number of parameters: ', params))
@@ -110,6 +150,7 @@ def main(args):
         model_without_ddp = model.module
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print('number of params:', n_parameters/(1024*1024))
+
     # lr_backbone_names = ["backbone.0", "backbone.neck", "input_proj", "transformer.encoder"]    
     def match_name_keywords(n, name_keywords):
         out = False
@@ -134,11 +175,17 @@ def main(args):
             "lr": args.lr * args.lr_linear_proj_mult,
         }
     ]
+
+    parameter_group = get_param_groups(model_without_ddp, args.weight_decay)
+
     # define optimizer
     if args.sgd:
-        optimizer = torch.optim.SGD(param_dicts, lr=args.lr, momentum=0.9, weight_decay=args.weight_decay)
+        # optimizer = torch.optim.SGD(param_dicts, lr=args.lr, momentum=0.9, weight_decay=args.weight_decay)
+        optimizer = torch.optim.SGD(parameter_group, lr=args.lr, momentum=0.9, weight_decay=args.weight_decay)
     else:
-        optimizer = torch.optim.AdamW(param_dicts, lr=args.lr, weight_decay=args.weight_decay)
+        # optimizer = torch.optim.AdamW(param_dicts, lr=args.lr, weight_decay=args.weight_decay)
+        optimizer = torch.optim.AdamW(parameter_group, lr=args.lr, weight_decay=args.weight_decay)
+    
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, args.lr_drop)
     # define dataloader
     dataset_train = build_dataset(image_set='train', args=args)
@@ -261,8 +308,12 @@ def main(args):
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))        
 
+
+
+
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='A smalll Transformer Backbone')
-    parser.add_argument('--config', default='configs/coco_train.yaml', type=str, help='path to config file')
+    parser = argparse.ArgumentParser(description='A Dynamic Vision Transformer Backbone')
+    parser.add_argument('--config', default='configs/xxx.yaml', type=str, help='path to config file')
     args = parser.parse_args()
     main(args)

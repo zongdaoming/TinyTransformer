@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-# @file    :   main_.py
-# @time    :   2021/08/03 11:45:51
+# @file    :   main_smca.py
+# @time    :   2021/08/22 23:07:03
 # @authors  :  daoming zong, chunya liu
 # @version :   1.0
 # @contact :   zongdaoming@sensetime.com; liuchunya@sensetime.com
@@ -36,14 +36,11 @@ from models import build_model
 import datasets.samplers as samplers
 from torch.utils.data import DataLoader
 from datasets import build_dataset
-from engine import evaluate, train_one_epoch
+from engine_smca import evaluate, train_one_epoch
 from flops_counter import get_model_complexity_info
 from utils import dynamic_load_trained_modules
 from utils.log_helper import default_logger as logger
 from timm.utils import get_state_dict, ModelEma
-
-# from models.alexnet import alexnet
-# from models.convert import convert_v2
 
 def main(args):
     # load config
@@ -72,30 +69,12 @@ def main(args):
     torch.backends.cudnn.benchmark = True
 
     model, criterion, postprocessors = build_model(args)
-    # model = alexnet(False)
     model.to(device)
 
-    # import spring.nart.tools.pytorch as pytorch
-    
-    # input_names = ['data']
-    # # model = model.cpu()
-    # with pytorch.convert_mode():
-    #     convert_v2(
-    #     model, [(3, 512, 512)],
-    #     filename='Detr',
-    #     input_names=input_names,
-    #     output_names=['FFN.blobs.classification', 'FFN.blobs.localization'],
-    #     # output_names=['FFN.blobs.classification'],
-    #     verbose=True,
-
-    #     )
-    # logger.info('=============tocaffe done=================')
-    # return
-
     # compute flops for small transformers
-    macs, params = get_model_complexity_info(model, tuple(args.input_res), as_strings=False, print_per_layer_stat=True, verbose=True)
-    logger.info('{:<30}  {:<8}'.format('Computational complexity: ', macs))
-    logger.info('{:<30}  {:<8}'.format('Number of parameters: ', params))
+    # macs, params = get_model_complexity_info(model, tuple(args.input_res), as_strings=False, print_per_layer_stat=True, verbose=True)
+    # logger.info('{:<30}  {:<8}'.format('Computational complexity: ', macs))
+    # logger.info('{:<30}  {:<8}'.format('Number of parameters: ', params))
     model_ema = None
     if args.model_ema:
         # Important to create EMA model after cuda(), DP wrapper, and AMP but before SyncBN and DDP wrapper

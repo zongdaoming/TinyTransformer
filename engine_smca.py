@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-# @file    :   engine.py
-# @time    :   2021/08/03 15:20:45
+# @file    :   engine_smca.py
+# @time    :   2021/08/22 22:40:12
 # @authors  :  daoming zong, chunya liu
 # @version :   1.0
 # @contact :   zongdaoming@sensetime.com; liuchunya@sensetime.com
@@ -32,9 +32,9 @@ from typing import Iterable, Optional
 import json
 import torch
 import torchvision
-import utils.misc as utils
+import utils.misc_n as utils
 import torch.distributed as dist
-from utils.misc import all_gather
+from utils.misc_smca import all_gather
 
 from datasets.data_prefetcher_ml import data_prefetcher
 from functools import reduce
@@ -57,12 +57,12 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     metric_logger.add_meter('grad_norm', utils.SmoothedValue(window_size=1, fmt='{value:.2f}'))
     header = 'Epoch: [{}]'.format(epoch)
     # print_freq = 10
-    print_freq = 100
-    
+    print_freq = 200
+
     prefetcher = data_prefetcher(data_loader, device, prefetch=True)
     samples, targets = prefetcher.next()
     for _ in metric_logger.log_every(range(len(data_loader)), print_freq, header):
-        outputs = model(samples)
+        outputs = model([samples, targets])
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
         losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
@@ -131,7 +131,7 @@ def train_one_epoch_s(model: torch.nn.Module, criterion: torch.nn.Module,
     macs, params = get_model_complexity_info(model, (3, 224, 224), as_strings=True, print_per_layer_stat=True, verbose=True)
 
     for _ in metric_logger.log_every(range(len(data_loader)), print_freq, header):
-        outputs = model(samples)        
+        outputs = model([samples,targets])        
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
         losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
@@ -232,7 +232,7 @@ def evaluate(model, criterion, postprocessors, data_loader, args, device, output
         samples = samples.to(device)
         targets = [{k: v.to(device, non_blocking=True) if k!='image_id' else v for k, v in t.items()} for t in targets]
         # targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-        outputs = model(samples)
+        outputs = model([samples, targets])
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
         # reduce losses over all GPUs for logging purposes

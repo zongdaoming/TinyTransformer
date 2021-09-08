@@ -27,10 +27,13 @@ from torch.nn import MultiheadAttention
 #from .clustered_attention import ClusteredAttention
 #from .improved_clustered_attention import ImprovedClusteredAttention
 #from .ada_clustered_attention import ClusteredAttention
-
+import torch
+from torch.nn.functional import linear, pad
+from torch import Tensor
+from torch.nn import MultiheadAttention
 from typing import Optional, Tuple, List
 import warnings
-import pdb
+
 def multi_head_attention_forward(
                                  query: Tensor,
                                  key: Tensor,
@@ -55,7 +58,7 @@ def multi_head_attention_forward(
                                  v_proj_weight: Optional[Tensor] = None,
                                  static_k: Optional[Tensor] = None,
                                  static_v: Optional[Tensor] = None,
-                                 gaussian: Optional[Tensor] = None, 
+                                 gaussian: Optional[Tensor] = None,
                                  ) -> Tuple[Tensor, Optional[Tensor]]:
     r"""
     Args:
@@ -79,8 +82,9 @@ def multi_head_attention_forward(
         use_separate_proj_weight: the function accept the proj. weights for query, key,
             and value in different forms. If false, in_proj_weight will be used, which is
             a combination of q_proj_weight, k_proj_weight, v_proj_weight.
-        q_proj_weight, k_proj_weight, v_proj_weight, in_proj_bias: input projection weight and bias.
+        q_proj_weight, k_proj_weight, v_proj_weight: input projection weight and bias.
         static_k, static_v: static key and value used for attention operators.
+        gaussian: the generated Gaussian-like weight map
     Shape:
         Inputs:
         - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
@@ -140,7 +144,6 @@ def multi_head_attention_forward(
                 k = None
                 v = None
             else:
-
                 # This is inline in_proj function with in_proj_weight and in_proj_bias
                 _b = in_proj_bias
                 _start = embed_dim
@@ -149,7 +152,6 @@ def multi_head_attention_forward(
                 if _b is not None:
                     _b = _b[_start:]
                 k, v = linear(key, _w, _b).chunk(2, dim=-1)
-
         else:
             # This is inline in_proj function with in_proj_weight and in_proj_bias
             _b = in_proj_bias
@@ -269,51 +271,45 @@ def multi_head_attention_forward(
             attn_mask = pad(attn_mask, (0, 1))
         if key_padding_mask is not None:
             key_padding_mask = pad(key_padding_mask, (0, 1))
-#    pdb.set_trace()
     naive = True
     if naive:
-       attn_output_weights = torch.bmm(q, k.transpose(1, 2))
-       assert list(attn_output_weights.size()) == [bsz * num_heads, tgt_len, src_len]
+        attn_output_weights = torch.bmm(q, k.transpose(1, 2))
+        assert list(attn_output_weights.size()) == [bsz * num_heads, tgt_len, src_len]
 
-       if attn_mask is not None:
-         if attn_mask.dtype == torch.bool:
-            attn_output_weights.masked_fill_(attn_mask, float('-inf'))
-         else:
-            attn_output_weights += attn_mask
+        if attn_mask is not None:
+            if attn_mask.dtype == torch.bool:
+                attn_output_weights.masked_fill_(attn_mask, float('-inf'))
+            else:
+                attn_output_weights += attn_mask
 
+        if key_padding_mask is not None:
+            attn_output_weights = attn_output_weights.view(bsz, num_heads, tgt_len, src_len)
+            attn_output_weights = attn_output_weights.masked_fill(
+                key_padding_mask.unsqueeze(1).unsqueeze(2), float('-inf'),)
+            attn_output_weights = attn_output_weights.view(bsz * num_heads, tgt_len, src_len)
 
-       if key_padding_mask is not None:
-          attn_output_weights = attn_output_weights.view(bsz, num_heads, tgt_len, src_len)
-          attn_output_weights = attn_output_weights.masked_fill(
-            key_padding_mask.unsqueeze(1).unsqueeze(2),
-            float('-inf'),
-          )
-          attn_output_weights = attn_output_weights.view(bsz * num_heads, tgt_len, src_len)
-       attn_output_weights = attn_output_weights +  gaussian[0].permute(2, 0, 1)
-       attn_output_weights = torch.nn.functional.softmax(
-           attn_output_weights, dim=-1)
-       attn_output_weights = torch.nn.functional.dropout(attn_output_weights, p=dropout_p, training=training)
+        attn_output_weights = attn_output_weights + gaussian[0].permute(2, 0, 1)
+        attn_output_weights = torch.nn.functional.softmax(attn_output_weights, dim=-1)
+        attn_output_weights = torch.nn.functional.dropout(attn_output_weights, p=dropout_p,
+                                                          training=training)
 
-       attn_output = torch.bmm(attn_output_weights, v)
-       assert list(attn_output.size()) == [bsz * num_heads, tgt_len, head_dim]
-    
-    
+        attn_output = torch.bmm(attn_output_weights, v)
+        assert list(attn_output.size()) == [bsz * num_heads, tgt_len, head_dim]
+
     attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
     attn_output = linear(attn_output, out_proj_weight, out_proj_bias)
-    
-    return attn_output, None
+
+    return attn_output, attn_output_weights.view(bsz, num_heads, tgt_len, src_len)
 
 
 class GaussianMultiheadAttention(MultiheadAttention):
     def __init__(self, embed_dim, num_heads, **kwargs):
         super(GaussianMultiheadAttention, self).__init__(embed_dim, num_heads, **kwargs)
         self.gaussian = True
-#        self.attention = ClusteredAttention(group_Q, group_K, attention_dropout=self.dropout)
-#        self.naive = None
-        #self.attention = ImprovedClusteredAttention(1000, softmax_temp=1)
 
     def forward(self, query, key, value, key_padding_mask=None,
                 need_weights=False, attn_mask=None, gaussian=None):
+        # type: (Tensor, Tensor, Tensor, Optional[Tensor], bool, Optional[Tensor], Optional[Tensor]) -> Tuple[Tensor, Optional[Tensor]]
         r"""
     Args:
         query, key, value: map a query and a set of key-value pairs to an output.
@@ -326,6 +322,8 @@ class GaussianMultiheadAttention(MultiheadAttention):
         need_weights: output attn_output_weights.
         attn_mask: 2D or 3D mask that prevents attention to certain positions. A 2D mask will be broadcasted for all
             the batches while a 3D mask allows to specify a different mask for the entries of each batch.
+        gaussian: 2D gaussian attention map that focus attention to certain object queries' initial estimations
+            with handcrafted query spatial priors.
     Shape:
         - Inputs:
         - query: :math:`(L, N, E)` where L is the target sequence length, N is the batch size, E is
@@ -345,6 +343,8 @@ class GaussianMultiheadAttention(MultiheadAttention):
           while the zero positions will be unchanged. If a BoolTensor is provided, positions with ``True``
           is not allowed to attend while ``False`` values will be unchanged. If a FloatTensor
           is provided, it will be added to the attention weight.
+        - gaussian: :math:`(L, S, nhead * batch_size)`, where nhead is the number of head in multi-head
+          attention module, L is the target sequence length, S is the source sequence length.
         - Outputs:
         - attn_output: :math:`(L, N, E)` where L is the target sequence length, N is the batch size,
           E is the embedding dimension.

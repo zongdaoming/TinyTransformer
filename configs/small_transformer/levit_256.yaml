@@ -49,16 +49,14 @@ clip_mode: agc # Gradient clipping mode. one of ("norm", "value", "agc")
 sgd: False
 
 #  Encoder Configurations 
-# compute flops:
-input_res: [3,1000,1333]
 #  Attention cinfiguration
 img_size: [1000,1333]
 patch_size: 16 # patch_size=16 is fixed due to Conv operator
-embed_dim: [128,256,384] # C
-key_dim: 16 # D
-depth: [2,3,4] # X
+embed_dim: [256,384,512] # C
+key_dim: 32 # D
+depth: [4,4,4] # X
 num_heads: [4,6,8] # N 
-drop_path: 0
+drop_path: 0.1
 # attn_ratio: [2, 2, 2]
 # mlp_ratio: [2, 2, 2]
 # down_ops: [
@@ -68,7 +66,7 @@ drop_path: 0
 #            ]
 # Decoder Configurations
 dec_layers: 6
-dec_hidden_dim: 384
+dec_hidden_dim: 512
 dim_feedforward: 2048
 dropout: 0.1
 dec_nheads: 8
@@ -102,8 +100,8 @@ giou_loss_coef: 2
 focal_alpha: 0.25
 
 ###################################################### Load Pre-trained Model or Resume checkpoint ############################################
-finetune:
-# finetune: /mnt/lustre/zongdaoming/models/SmallT/data/LeViT-128S-96703c44.pth
+# finetune:
+finetune: /mnt/lustre/zongdaoming/models/SmallT/data/LeViT-128-b88c2750.pth
 resume:
 ###################################################### Dateset  preparation ###################################################################
 meta_file_train:
@@ -148,16 +146,13 @@ meta_file_test:
 
 res_dir: /mnt/lustre/zongdaoming/models/SmallT/results/
 metrics_dir: /mnt/lustre/zongdaoming/models/SmallT/results/
-mix_root: /mnt/lustre/zongdaoming/models/SmallT/results/visualization
-analysis_json: /mnt/lustre/zongdaoming/models/SmallT/results/visualization/bad_case.json
-
 
 # Evaluator Parameters for Visualization
 # image_reader:
 #    image_dir:  /mnt/lustre/rws3/lustre/RWS_raw/real_data/salon_0103/
 #    color_mode: RGB
 rank_dataset: False
-bad_case_analyser: manual_0.5
+# bad_case_analyser: manual_0.5
 # img_root:
 # vis_mode:
 # ignore_mode:
