@@ -75,8 +75,7 @@ def main(args):
     # model = alexnet(False)
     model.to(device)
 
-    # import spring.nart.tools.pytorch as pytorch
-    
+    # import spring.nart.tools.pytorch as pytorch_tools
     # input_names = ['data']
     # # model = model.cpu()
     # with pytorch.convert_mode():

@@ -81,7 +81,6 @@ def register_model_architecture(model_name):
         return fn
     return wrapper
 
-
 DROPOUT_FLOPS = 4
 LAYER_NORM_FLOPS = 5
 ACTIVATION_FLOPS = 8
