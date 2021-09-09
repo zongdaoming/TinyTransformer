@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 #Author: Daoming Zong
 #Date: 2021-09-09 20:32:36
-#LastEditTime: 2021-09-09 22:14:41
+#LastEditTime: 2021-09-10 01:18:16
 #LastEditors: Daoming Zong and Chunya Liu
 #Description: 
 #FilePath: /models/SmallT/models/parallel_transformer.py
 #Copyright (c) 2021 SenseTime IRDC Group. All Rights Reserved.
-
 import math
+import copy
 import torch
 import warnings
 import torch.nn as nn
@@ -101,8 +101,7 @@ class Block(nn.Module):
                  drop_path=0., act_layer=nn.GELU, norm_layer=partial(nn.LayerNorm, eps=1e-6)):
         super().__init__()
         self.norm1 = norm_layer(dim)
-        self.attn = Attention(
-            dim, num_heads=num_heads, qkv_bias=qkv_bias, qk_scale=qk_scale, attn_drop=attn_drop, proj_drop=drop)
+        self.attn = Attention(dim, num_heads=num_heads, qkv_bias=qkv_bias, qk_scale=qk_scale, attn_drop=attn_drop, proj_drop=drop)
         # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
         self.norm2 = norm_layer(dim)
@@ -113,7 +112,6 @@ class Block(nn.Module):
         x = x + self.drop_path(self.attn(self.norm1(x)))
         x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
-
 
 class ConvBlock(nn.Module):
     def __init__(self, inplanes, outplanes, stride=1, res_conv=False, act_layer=nn.ReLU, groups=1,
@@ -437,7 +435,6 @@ class Parellelformer(nn.Module):
         trunc_normal_(self.cls_token, std=.02)
         self.init_weights(pretrained)
         
-
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=.02)
@@ -485,7 +482,6 @@ class Parellelformer(nn.Module):
             # .0.attn.proj.weight', 'backbone.block1.0.attn.proj.bias', 'backbone.block1.0.attn.sr.weight', 'backbone.block1.0.attn.sr.bias', 'backbone.block1.0.attn.norm.weight', 'backbone.block1.0.attn.n
             # orm.bias', 'backbone.block1.0.norm2.weight',
             '''
-                        
             state_dict = self.state_dict()
             for k in ['head.weight', 'head.bias', 'head_dist.weight', 'head_dist.bias',
                     'trans_cls_head.weight', 'trans_cls_head.bias', 'conv_cls_head.weight', 'conv_cls_head.bias']:
@@ -508,8 +504,7 @@ class Parellelformer(nn.Module):
                 # only the position tokens are interpolated
                 pos_tokens = pos_embed_checkpoint[:, num_extra_tokens:]
                 pos_tokens = pos_tokens.reshape(-1, orig_size, orig_size, embedding_size).permute(0, 3, 1, 2)
-                pos_tokens = torch.nn.functional.interpolate(
-                    pos_tokens, size=(new_size, new_size), mode='bicubic', align_corners=False)
+                pos_tokens = torch.nn.functional.interpolate(pos_tokens, size=(new_size, new_size), mode='bicubic', align_corners=False)
                 pos_tokens = pos_tokens.permute(0, 2, 3, 1).flatten(1, 2)
                 new_pos_embed = torch.cat((extra_tokens, pos_tokens), dim=1)
                 checkpoint['pos_embed'] = new_pos_embed
@@ -550,6 +545,7 @@ class Parellelformer(nn.Module):
         #     m.eval()
         #     for param in m.parameters():
         #         param.requires_grad = False
+                
     def freeze_bn(self, m):
         if isinstance(m, nn.BatchNorm2d):
             m.eval()
@@ -566,7 +562,7 @@ class Parellelformer(nn.Module):
         output = []
         B = x.shape[0]
         cls_tokens = self.cls_token.expand(B, -1, -1)
-
+        
         # stem
         x_base = self.maxpool(self.act1(self.bn1(self.conv1(x))))
 
@@ -582,6 +578,8 @@ class Parellelformer(nn.Module):
             if i in [4, 8, 11, 12]:
                 output.append(x)
 
+
+          
         if self.return_cls_token:
             return tuple(output), self.trans_cls_head(self.trans_norm(x_t[:, [0,]]))
         else:
@@ -600,7 +598,6 @@ def _get_activation_fn(activation):
     if activation == "glu":
         return F.glu
     raise RuntimeError(F"activation should be relu/gelu, not {activation}.")
-
 
 class TransformerDecoder(nn.Module):
     def __init__(self, decoder_layer, num_layers, norm=None, return_intermediate=False):
@@ -767,7 +764,7 @@ class Transformer(nn.Module):
         for p in self.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
-
+                
     def forward(self, src, mask, query_embed):
         # flatten NxCxHxW to HWxNxC
         bs, c, h, w = src.shape
@@ -784,15 +781,11 @@ class Transformer(nn.Module):
 
 
 configs={
-    "lvvit_s": 
-    dict(
-        img_size=224, patch_size=16, embed_dim=384, depth=16, num_heads=6, mlp_ratio=3.,
-        p_emb='4_2', skip_lam=2., return_dense=True, mix_token=True,
-        pruning_loc=[4,8,12], token_ratio=KEEP_RATE, distill=False
-        )
+    "conformer_tiny_patch16": dict(patch_size=16, channel_ratio=1, embed_dim=384, depth=12, num_heads=6, mlp_ratio=4, qkv_bias=True, return_cls_token=False),
+    "conformer_small_patch16": dict(patch_size=16, channel_ratio=4, embed_dim=384, depth=12, num_heads=6, mlp_ratio=4, qkv_bias=True, return_cls_token=False),
+    "conformer_small_patch32": dict(patch_size=32, channel_ratio=4, embed_dim=384, depth=12, num_heads=6, mlp_ratio=4, qkv_bias=True, return_cls_token=False),
+    "conformer_base_patch16": dict(patch_size=16, channel_ratio=6, embed_dim=576, depth=12, num_heads=9, mlp_ratio=4, qkv_bias=True, return_cls_token=False)
 }
-
-
 
 def build_transformer(args):
     cfgs = configs[args.backbone]
