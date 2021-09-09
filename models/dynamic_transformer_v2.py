@@ -1013,6 +1013,7 @@ class Transformer(nn.Module):
         # torch.Size([6, 400, 3, 768])
         return hs.transpose(1, 2)
 
+
 base_rate = 0.7
 KEEP_RATE = [base_rate, base_rate ** 2, base_rate ** 3]
 
