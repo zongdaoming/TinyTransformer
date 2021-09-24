@@ -1,4 +1,4 @@
-model_name: dynamic_detr
+model_name: parallel_detr
 dataset_file: casino_multilist
 port: 2022
 
@@ -56,14 +56,14 @@ sgd: False
 input_res: [3,1024,1024]
 img_size: 1024
 
-backbone: lvvit_s # lvvit_m
-pretrained: /mnt/lustre/zongdaoming/models/SmallT/data/dynamic_detr/dynamic-vit_lv-s_r0.7.pth
+backbone: conformer_tiny_patch16 # lvvit_m
+pretrained: /mnt/lustre/zongdaoming/models/SmallT/data/paralleltransformer/conformer_tiny_patch16.pth
 
 # Decoder configurations
 dec_layers: 6
 dec_nheads: 8
-dim_feedforward: 1024
-dec_hidden_dim: 384
+dim_feedforward: 512
+dec_hidden_dim: 256
 dropout: 0.1
 num_queries: 1500
 dec_n_points: 4

@@ -1,4 +1,4 @@
-model_name: conditional_detr
+model_name: light_conditional.conditional_detr_convlinear
 dataset_file: casino_multilist
 port: 2022
 
@@ -76,6 +76,7 @@ num_queries: 400
 pre_norm: False
 
 # Exponential Moving Average
+# model_ema: True
 model_ema: True
 model_ema_decay: 0.99996
 model_ema_force_cpu: True

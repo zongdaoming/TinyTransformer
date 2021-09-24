@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #Author: Daoming Zong
 #Date: 2021-09-09 20:32:36
-#LastEditTime: 2021-09-10 01:18:16
+#LastEditTime: 2021-09-10 03:18:11
 #LastEditors: Daoming Zong and Chunya Liu
 #Description: 
 #FilePath: /models/SmallT/models/parallel_transformer.py
@@ -469,9 +469,8 @@ class Parellelformer(nn.Module):
 
         if isinstance(pretrained, str):
             checkpoint = torch.load(pretrained, map_location='cpu')
-            import pdb
-            pdb.set_trace()
-            new_checkpoint = _process_mmcls_checkpoint(checkpoint)
+            # import pdb; pdb.set_trace()
+            # new_checkpoint = _process_mmcls_checkpoint(checkpoint)
             '''
             # ************************************************************************* Detailed code for loading checkpoint ********************************************************************************
             # Missing Keys: ['patch_embed1.proj.weight', 'patch_embed1.proj.bias', 'patch_embed1.norm.weight', 'patch_embed1.norm.bias', 'block1.0.norm1.weight', 'block1.0.norm1.bias', 'block1.0.attn.q.wei
@@ -483,12 +482,13 @@ class Parellelformer(nn.Module):
             # orm.bias', 'backbone.block1.0.norm2.weight',
             '''
             state_dict = self.state_dict()
-            for k in ['head.weight', 'head.bias', 'head_dist.weight', 'head_dist.bias',
-                    'trans_cls_head.weight', 'trans_cls_head.bias', 'conv_cls_head.weight', 'conv_cls_head.bias']:
-                if k in checkpoint and checkpoint[k].shape != state_dict[k].shape:
+            # import pdb; pdb.set_trace()
+            
+            for k in ['head.weight', 'head.bias', 'head_dist.weight', 'head_dist.bias', 'trans_cls_head.weight', 'trans_cls_head.bias', 'conv_cls_head.weight', 'conv_cls_head.bias']:
+                if k in checkpoint and k in state_dict and checkpoint[k].shape != state_dict[k].shape:
                     print(f"Removing key {k} from pretrained checkpoint")
                     del checkpoint[k]
-
+                    
             if 'pos_embed' in checkpoint.keys():
                 # interpolate position embedding
                 pos_embed_checkpoint = checkpoint['pos_embed']
@@ -510,7 +510,7 @@ class Parellelformer(nn.Module):
                 checkpoint['pos_embed'] = new_pos_embed
 
             logger.info(f"Loading pretrained model from {pretrained}")
-            missing_keys, unexpected_keys = self.load_state_dict(new_checkpoint['state_dict'], strict=False)
+            missing_keys, unexpected_keys = self.load_state_dict(checkpoint, strict=False)
             unexpected_keys = [k for k in unexpected_keys if not (k.endswith('total_params') or k.endswith('total_ops'))]
             if len(missing_keys) > 0:
                 logger.info('Missing Keys: {}'.format(missing_keys))
@@ -577,14 +577,18 @@ class Parellelformer(nn.Module):
             x, x_t = eval('self.conv_trans_' + str(i))(x, x_t)
             if i in [4, 8, 11, 12]:
                 output.append(x)
+        encoder_out = output[-1].view(output[-1].shape[0],output[-1].shape[1],-1)
+        encoder_out = encoder_out.permute(2,0,1)
+        return encoder_out
+        # output[0].shape torch.Size([1, 64, 256, 256])
+        # output[1].shape torch.Size([1, 128, 128, 128])
+        # output[2].shape torch.Size([1, 256, 64, 64])
+        # output[3].shape torch.Size([1, 256, 32, 32])      
 
-
-          
-        if self.return_cls_token:
-            return tuple(output), self.trans_cls_head(self.trans_norm(x_t[:, [0,]]))
-        else:
-            return tuple(output)
-
+        # if self.return_cls_token:
+        #     return tuple(output), self.trans_cls_head(self.trans_norm(x_t[:, [0,]]))
+        # else:
+        #     return tuple(output)
 
 def _get_clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
@@ -779,7 +783,6 @@ class Transformer(nn.Module):
         # torch.Size([6, 400, 3, 768])
         return hs.transpose(1, 2)
 
-
 configs={
     "conformer_tiny_patch16": dict(patch_size=16, channel_ratio=1, embed_dim=384, depth=12, num_heads=6, mlp_ratio=4, qkv_bias=True, return_cls_token=False),
     "conformer_small_patch16": dict(patch_size=16, channel_ratio=4, embed_dim=384, depth=12, num_heads=6, mlp_ratio=4, qkv_bias=True, return_cls_token=False),
@@ -790,7 +793,6 @@ configs={
 def build_transformer(args):
     cfgs = configs[args.backbone]
     cfgs.update({'pretrained': args.pretrained})
-    cfgs['img_size']=args.img_size
     return Transformer(
         e_cfgs = cfgs, 
         d_model=args.dec_hidden_dim,

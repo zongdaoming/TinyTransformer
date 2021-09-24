@@ -2,7 +2,7 @@
 ###
  # @Author: your name
  # @Date: 2021-08-22 23:02:34
- # @LastEditTime: 2021-09-07 13:50:37
+ # @LastEditTime: 2021-09-22 21:27:29
  # @LastEditors: Daoming Zong and Chunya Liu
  # @Description: In User Settings Edit
  # @FilePath: /models/SmallT/scripts/train.sh
@@ -59,9 +59,22 @@ srun --mpi=pmi2 -p ${PARTITION} \
 # sh ./scripts/train.sh irdcRD 48 ./configs/small_transformer/dpt_detr_flops.yaml
 # sh ./scripts/train.sh irdcRD 8 ./configs/small_transformer_ablation/detr_flops_dec_layers.yaml
 # sh ./scripts/train.sh irdcRD 8 ./configs/small_transformer_ablation/detr_flops_dim_feedward.yaml
-# sh ./scripts/train.sh irdcRD 8 ./configs/small_transformer_ablation/conditional_detr_flops.yaml
+# sh ./scripts/train.sh irdcRD 16 ./configs/small_transformer_ablation/conditional_detr_flops.yaml
 # sh ./scripts/train.sh test 1 ./configs/small_transformer_ablation/detr_flops.yaml
 # sh ./scripts/train.sh irdcRD 4 ./configs/small_transformer_ablation/detr_flops_conv.yaml
 
 # sh ./scripts/train.sh irdcRD 3 ./configs/dynamic_transformer/dynamic_transformer.yaml
 # sh ./scripts/train.sh irdcRD 8 ./configs/dynamic_transformer/dynamic_transformer.yaml
+
+
+# sh ./scripts/train.sh test 8 ./configs/parallel_transformer/parallel_transformer.yaml
+# sh ./scripts/train.sh irdcRD 16 ./configs/parallel_transformer/parallel_transformer.yaml
+# sh ./scripts/train.sh irdcRD 8 ./configs/parallel_transformer/parallel_transformer.yaml
+
+
+# sh ./scripts/train.sh irdcRD 8 ./configs/small_transformer_ablation/conditional_detr_flops.yaml
+# sh ./scripts/train.sh test 4 ./configs/small_transformer_ablation/conditional_detr_flops.yaml
+# sh ./scripts/train.sh irdcRD 8 ./configs/lightconv/conditional_lightconv.yaml
+# sh ./scripts/train.sh irdcRD 8 ./configs/lightconv/conditional_dynamic_conv.yaml
+
+# sh ./scripts/train.sh irdcRD 8 ./configs/lightconv/conditional_hybrid_conv.yaml

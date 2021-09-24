@@ -57,25 +57,8 @@ default_cfgs = {
     'LV_ViT_Large': _cfg(crop_pct=1.0),
 }
 
-
 MODEL_REGISTRY = {}
 def register_model_architecture(model_name):
-    """
-    New model architectures can be added to fairseq with the 
-    func:`register_model_architecture` function decorator. 
-    argument.
-    For example::
-
-        @register_model_architecture('lstm'')
-        def lstm_luong_wmt_en_de(cfg):
-            args.encoder_embed_dim = getattr(cfg.model, 'encoder_embed_dim', 1000)
-            (...)
-    The decorated function should take a single argument *cfg*, which is a
-    :class:`omegaconf.DictConfig`. The decorated function should modify these
-    arguments in-place to match the desired architecture.
-    Args:
-        model_name (str): the name of the Model 
-    """
     def wrapper(fn):
         MODEL_REGISTRY[model_name] = fn
         return fn
@@ -1033,6 +1016,7 @@ configs={
 }
 
 def build_transformer(args):
+
     cfgs = configs[args.backbone]
     cfgs.update({'pretrained': args.pretrained})
     cfgs['img_size']=args.img_size
